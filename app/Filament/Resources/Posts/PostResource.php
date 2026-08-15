@@ -24,6 +24,8 @@ class PostResource extends Resource
 
     protected static ?string $modelLabel = '貼文';
 
+    protected static ?int $navigationSort = 30;
+
     public static function form(Schema $schema): Schema
     {
         return PostForm::configure($schema);

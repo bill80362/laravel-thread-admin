@@ -25,6 +25,8 @@ class ThreadsAppResource extends Resource
 
     protected static ?string $modelLabel = 'Threads App';
 
+    protected static ?int $navigationSort = 10;
+
     public static function form(Schema $schema): Schema
     {
         return ThreadsAppForm::configure($schema);

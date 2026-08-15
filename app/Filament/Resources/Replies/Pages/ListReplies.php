@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Replies\Pages;
 
 use App\Filament\Resources\Replies\ReplyResource;
+use App\Filament\Resources\Replies\Widgets\RepliesSyncNotice;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
@@ -14,6 +15,13 @@ class ListReplies extends ListRecords
     {
         return [
             CreateAction::make(),
+        ];
+    }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            RepliesSyncNotice::class,
         ];
     }
 }

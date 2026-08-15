@@ -23,6 +23,10 @@ class ReplyResource extends Resource
 
     protected static ?string $modelLabel = '回覆';
 
+    protected static ?string $pluralModelLabel = '回覆';
+
+    protected static ?int $navigationSort = 40;
+
     public static function form(Schema $schema): Schema
     {
         return ReplyForm::configure($schema);
