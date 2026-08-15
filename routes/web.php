@@ -8,6 +8,6 @@ Route::get('/', function () {
 });
 
 Route::prefix('threads/oauth')->group(function () {
-    Route::get('redirect', [ThreadsOAuthController::class, 'redirect'])->name('threads.oauth.redirect');
+    Route::get('{app}/redirect', [ThreadsOAuthController::class, 'redirect'])->name('threads.oauth.redirect');
     Route::get('callback', [ThreadsOAuthController::class, 'callback'])->name('threads.oauth.callback');
 });

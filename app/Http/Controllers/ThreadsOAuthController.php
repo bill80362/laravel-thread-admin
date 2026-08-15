@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ThreadsAccountStatus;
+use App\Models\OAuthState;
 use App\Models\ThreadsAccount;
+use App\Models\ThreadsApp;
 use App\Services\ThreadsClient;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,13 +19,16 @@ class ThreadsOAuthController extends Controller
     /**
      * Redirect the user to the Threads authorization window.
      */
-    public function redirect(): RedirectResponse
+    public function redirect(ThreadsApp $app): RedirectResponse
     {
-        $state = bin2hex(random_bytes(16));
+        // 驗證 App 歸屬於目前登入人員（或為遷移產生的無主 App）。
+        if ($app->user_id !== null && $app->user_id !== auth()->id()) {
+            abort(403);
+        }
 
-        session(['threads_oauth_state' => $state]);
+        $state = OAuthState::createForApp($app);
 
-        return redirect()->away($this->threads->buildAuthorizationUrl($state));
+        return redirect()->away($this->threads->buildAuthorizationUrl($app, $state));
     }
 
     /**
@@ -35,12 +40,20 @@ class ThreadsOAuthController extends Controller
             return $this->fail('授權已取消');
         }
 
-        $state = $request->query('state');
-        $expected = session()->pull('threads_oauth_state');
+        $rawState = $request->query('state');
 
-        if ($state === null || $state !== $expected) {
-            return $this->fail('OAuth state 不符，請重新授權');
+        if ($rawState === null) {
+            return $this->fail('缺少 OAuth state，請重新授權');
         }
+
+        $resolved = OAuthState::resolve($rawState);
+
+        if ($resolved === null) {
+            return $this->fail('OAuth state 無效或已過期，請重新授權');
+        }
+
+        $app = $resolved['app'];
+        $targetAccount = $resolved['account'];
 
         $code = $request->query('code');
 
@@ -49,25 +62,36 @@ class ThreadsOAuthController extends Controller
         }
 
         try {
-            $shortToken = $this->threads->exchangeCodeForShortToken($code);
-            $longToken = $this->threads->exchangeShortForLongToken($shortToken);
+            $shortToken = $this->threads->exchangeCodeForShortToken($app, $code);
+            $longToken = $this->threads->exchangeShortForLongToken($app, $shortToken);
             $profile = $this->threads->getProfile($longToken['access_token']);
 
-            $account = ThreadsAccount::query()->updateOrCreate(
-                ['threads_user_id' => $profile['id']],
-                [
-                    'username' => $profile['username'] ?? $profile['id'],
-                    'name' => $profile['name'] ?? null,
-                    'avatar' => null,
-                    'access_token' => $longToken['access_token'],
-                    'token_expires_at' => now()->addSeconds($longToken['expires_in'] ?? 5184000),
-                    'status' => ThreadsAccountStatus::Active,
-                ],
-            );
+            $attributes = [
+                'threads_app_id' => $app->id,
+                'username' => $profile['username'] ?? $profile['id'],
+                'name' => $profile['name'] ?? null,
+                'avatar' => null,
+                'access_token' => $longToken['access_token'],
+                'token_expires_at' => now()->addSeconds($longToken['expires_in'] ?? 5184000),
+                'status' => ThreadsAccountStatus::Active,
+            ];
+
+            // 重新授權：更新既有帳號；新綁定：updateOrCreate。
+            if ($targetAccount !== null) {
+                $targetAccount->update($attributes);
+                $account = $targetAccount;
+                $message = "已重新授權帳號 @{$account->username}";
+            } else {
+                $account = ThreadsAccount::query()->updateOrCreate(
+                    ['threads_user_id' => $profile['id']],
+                    $attributes,
+                );
+                $message = "已成功綁定帳號 @{$account->username}";
+            }
 
             return redirect()
                 ->to(URL::route('filament.admin.resources.threads-accounts.index'))
-                ->with('success', "已成功綁定帳號 @{$account->username}");
+                ->with('success', $message);
         } catch (\Throwable $e) {
             Log::error('Threads OAuth 綁定失敗', ['exception' => $e]);
 
