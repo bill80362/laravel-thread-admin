@@ -76,6 +76,7 @@ class ThreadsAccountsTable
         return Action::make('reauthorize')
             ->label('重新授權')
             ->icon('heroicon-o-arrow-path')
+            ->visible(fn (ThreadsAccount $record): bool => $record->threads_app_id !== null)
             ->url(fn (ThreadsAccount $record) => route('threads.oauth.redirect', [
                 'app' => $record->threads_app_id,
                 'account' => $record->id,
