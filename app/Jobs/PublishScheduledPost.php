@@ -32,7 +32,11 @@ class PublishScheduledPost implements ShouldQueue
     {
         $post = Post::query()->find($this->postId);
 
-        if ($post === null || $post->status !== PostStatus::Scheduled) {
+        $expectedStatus = $this->creationId === null
+            ? PostStatus::Scheduled
+            : PostStatus::Publishing;
+
+        if ($post === null || $post->status !== $expectedStatus) {
             return;
         }
 

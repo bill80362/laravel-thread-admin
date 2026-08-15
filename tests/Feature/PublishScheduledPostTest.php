@@ -10,6 +10,7 @@ use App\Models\Post;
 use App\Models\ThreadsAccount;
 use App\Services\ThreadsClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use Mockery;
 use Tests\TestCase;
 
@@ -17,12 +18,38 @@ class PublishScheduledPostTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_first_stage_creates_container_and_sets_status_to_publishing(): void
+    {
+        Queue::fake();
+
+        $account = ThreadsAccount::factory()->create();
+        $post = Post::factory()->create([
+            'threads_account_id' => $account->id,
+            'status' => PostStatus::Scheduled,
+            'scheduled_at' => now()->subMinute(),
+        ]);
+
+        $threads = Mockery::mock(ThreadsClient::class);
+        $threads->shouldReceive('createTextContainer')
+            ->once()
+            ->andReturn('creation-id-123');
+        $threads->shouldReceive('publishContainer')->never();
+
+        $job = new PublishScheduledPost($post->id);
+        $job->handle($threads);
+
+        $post->refresh();
+
+        $this->assertSame(PostStatus::Publishing, $post->status);
+        Queue::assertPushed(PublishScheduledPost::class, 1);
+    }
+
     public function test_successful_publish_updates_post_status(): void
     {
         $account = ThreadsAccount::factory()->create();
         $post = Post::factory()->create([
             'threads_account_id' => $account->id,
-            'status' => PostStatus::Scheduled,
+            'status' => PostStatus::Publishing,
             'scheduled_at' => now()->subMinute(),
         ]);
 
@@ -46,7 +73,7 @@ class PublishScheduledPostTest extends TestCase
         $account = ThreadsAccount::factory()->create();
         $post = Post::factory()->create([
             'threads_account_id' => $account->id,
-            'status' => PostStatus::Scheduled,
+            'status' => PostStatus::Publishing,
             'scheduled_at' => now()->subMinute(),
         ]);
 
@@ -71,7 +98,7 @@ class PublishScheduledPostTest extends TestCase
         $account = ThreadsAccount::factory()->create();
         $post = Post::factory()->create([
             'threads_account_id' => $account->id,
-            'status' => PostStatus::Scheduled,
+            'status' => PostStatus::Publishing,
             'scheduled_at' => now()->subMinute(),
         ]);
 
