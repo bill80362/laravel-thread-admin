@@ -53,6 +53,27 @@ class PostResourceTest extends TestCase
             ->assertHasFormErrors(['text' => 'max']);
     }
 
+    public function test_create_post_with_past_scheduled_at(): void
+    {
+        $account = ThreadsAccount::factory()->create();
+
+        Livewire::actingAs(User::factory()->create())
+            ->test(CreatePost::class)
+            ->fillForm([
+                'threads_account_id' => $account->id,
+                'text' => '這是一篇補發貼文',
+                'scheduled_at' => now()->subHour()->format('Y-m-d H:i:s'),
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $this->assertDatabaseHas('posts', [
+            'threads_account_id' => $account->id,
+            'text' => '這是一篇補發貼文',
+            'status' => PostStatus::Scheduled->value,
+        ]);
+    }
+
     public function test_list_posts_shows_records(): void
     {
         $account = ThreadsAccount::factory()->create();

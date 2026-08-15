@@ -51,7 +51,7 @@ class PostForm
                 DateTimePicker::make('scheduled_at')
                     ->label('排程時間')
                     ->required()
-                    ->minDate(now())
+                    ->default(now())
                     ->native(false),
             ]);
     }
