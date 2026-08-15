@@ -6,6 +6,7 @@ use App\Enums\ThreadsAccountStatus;
 use Database\Factories\ThreadsAccountFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ThreadsAccount extends Model
@@ -14,6 +15,7 @@ class ThreadsAccount extends Model
     use HasFactory;
 
     protected $fillable = [
+        'threads_app_id',
         'threads_user_id',
         'username',
         'name',
@@ -37,6 +39,16 @@ class ThreadsAccount extends Model
             'last_synced_at' => 'datetime',
             'status' => ThreadsAccountStatus::class,
         ];
+    }
+
+    /**
+     * The Threads app this account belongs to.
+     *
+     * @return BelongsTo<ThreadsApp, ThreadsAccount>
+     */
+    public function threadsApp(): BelongsTo
+    {
+        return $this->belongsTo(ThreadsApp::class);
     }
 
     /**
