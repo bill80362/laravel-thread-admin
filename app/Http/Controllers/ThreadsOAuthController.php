@@ -19,14 +19,23 @@ class ThreadsOAuthController extends Controller
     /**
      * Redirect the user to the Threads authorization window.
      */
-    public function redirect(ThreadsApp $app): RedirectResponse
+    public function redirect(Request $request, ThreadsApp $app): RedirectResponse
     {
         // 驗證 App 歸屬於目前登入人員（或為遷移產生的無主 App）。
         if ($app->user_id !== null && $app->user_id !== auth()->id()) {
             abort(403);
         }
 
-        $state = OAuthState::createForApp($app);
+        $targetAccount = null;
+
+        if ($accountId = $request->query('account')) {
+            $targetAccount = ThreadsAccount::query()
+                ->where('id', $accountId)
+                ->where('threads_app_id', $app->id)
+                ->first();
+        }
+
+        $state = OAuthState::createForApp($app, $targetAccount);
 
         return redirect()->away($this->threads->buildAuthorizationUrl($app, $state));
     }

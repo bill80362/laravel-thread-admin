@@ -3,9 +3,11 @@
 namespace App\Filament\Resources\ThreadsAccounts\Tables;
 
 use App\Enums\ThreadsAccountStatus;
+use App\Models\ThreadsAccount;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class ThreadsAccountsTable
@@ -14,6 +16,11 @@ class ThreadsAccountsTable
     {
         return $table
             ->columns([
+                TextColumn::make('threadsApp.name')
+                    ->label('所屬 App')
+                    ->searchable()
+                    ->sortable(),
+
                 TextColumn::make('username')
                     ->label('帳號')
                     ->searchable()
@@ -50,19 +57,28 @@ class ThreadsAccountsTable
                     ->placeholder('尚未同步'),
             ])
             ->filters([
-                //
+                SelectFilter::make('threads_app_id')
+                    ->label('App')
+                    ->relationship('threadsApp', 'name'),
             ])
             ->recordActions([
+                self::reauthorizeAction(),
                 DeleteAction::make()
                     ->label('解除綁定')
                     ->modalHeading('解除綁定 Threads 帳號')
                     ->modalDescription('解除綁定後，該帳號的未發排程文章將一併取消。'),
             ])
-            ->toolbarActions([
-                Action::make('bindAccount')
-                    ->label('綁定 Threads 帳號')
-                    ->icon('heroicon-o-link')
-                    ->url(route('threads.oauth.redirect')),
-            ]);
+            ->toolbarActions([]);
+    }
+
+    private static function reauthorizeAction(): Action
+    {
+        return Action::make('reauthorize')
+            ->label('重新授權')
+            ->icon('heroicon-o-arrow-path')
+            ->url(fn (ThreadsAccount $record) => route('threads.oauth.redirect', [
+                'app' => $record->threads_app_id,
+                'account' => $record->id,
+            ]));
     }
 }
