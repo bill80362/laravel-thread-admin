@@ -134,6 +134,82 @@ class PublishScheduledPostTest extends TestCase
         $this->assertSame(PostStatus::Published, $post->status);
     }
 
+    public function test_retryable_error_redispatches_and_increments_attempts(): void
+    {
+        Queue::fake();
+
+        $account = ThreadsAccount::factory()->create();
+        $post = Post::factory()->create([
+            'threads_account_id' => $account->id,
+            'status' => PostStatus::Scheduled,
+            'scheduled_at' => now()->subMinute(),
+            'publish_attempts' => 0,
+        ]);
+
+        $threads = Mockery::mock(ThreadsClient::class);
+        $threads->shouldReceive('createTextContainer')
+            ->once()
+            ->andThrow(new ThreadsApiException('The requested resource does not exist', null, null));
+
+        $job = new PublishScheduledPost($post->id);
+        $job->handle($threads);
+
+        $post->refresh();
+
+        $this->assertSame(1, $post->publish_attempts);
+        $this->assertSame(PostStatus::Scheduled, $post->status);
+        Queue::assertPushed(PublishScheduledPost::class, 1);
+    }
+
+    public function test_retryable_error_at_max_attempts_marks_failed(): void
+    {
+        $account = ThreadsAccount::factory()->create();
+        $post = Post::factory()->create([
+            'threads_account_id' => $account->id,
+            'status' => PostStatus::Scheduled,
+            'scheduled_at' => now()->subMinute(),
+            'publish_attempts' => PublishScheduledPost::MAX_PUBLISH_ATTEMPTS,
+        ]);
+
+        $threads = Mockery::mock(ThreadsClient::class);
+        $threads->shouldReceive('createTextContainer')
+            ->once()
+            ->andThrow(new ThreadsApiException('The requested resource does not exist', null, null));
+
+        $job = new PublishScheduledPost($post->id);
+        $job->handle($threads);
+
+        $post->refresh();
+
+        $this->assertSame(PostStatus::Failed, $post->status);
+        $this->assertSame('The requested resource does not exist', $post->error_message);
+    }
+
+    public function test_permanent_error_does_not_retry(): void
+    {
+        $account = ThreadsAccount::factory()->create();
+        $post = Post::factory()->create([
+            'threads_account_id' => $account->id,
+            'status' => PostStatus::Scheduled,
+            'scheduled_at' => now()->subMinute(),
+            'publish_attempts' => 0,
+        ]);
+
+        $threads = Mockery::mock(ThreadsClient::class);
+        $threads->shouldReceive('createTextContainer')
+            ->once()
+            ->andThrow(new ThreadsApiException('Invalid OAuth access token', 190, 401));
+
+        $job = new PublishScheduledPost($post->id);
+        $job->handle($threads);
+
+        $post->refresh();
+
+        $this->assertSame(PostStatus::Failed, $post->status);
+        $this->assertSame('token 失效', $post->error_message);
+        $this->assertSame(0, $post->publish_attempts);
+    }
+
     protected function tearDown(): void
     {
         Mockery::close();

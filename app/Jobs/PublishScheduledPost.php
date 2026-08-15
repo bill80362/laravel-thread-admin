@@ -87,6 +87,12 @@ class PublishScheduledPost implements ShouldQueue
                     'status' => PostStatus::Failed,
                     'error_message' => '已達每日發文上限',
                 ]);
+            } elseif ($e->isRetryable() && $post->publish_attempts < self::MAX_PUBLISH_ATTEMPTS) {
+                $attempt = $post->publish_attempts + 1;
+                $post->update(['publish_attempts' => $attempt]);
+
+                static::dispatch($this->postId, $this->creationId)
+                    ->delay(now()->addSeconds($attempt * self::RETRY_BACKOFF_SECONDS));
             } else {
                 $post->update([
                     'status' => PostStatus::Failed,
