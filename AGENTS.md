@@ -1,4 +1,19 @@
 <laravel-boost-guidelines>
+=== project rules ===
+
+# OpenSpec 工作流程（強制）
+
+- **所有功能開發、Bug 修復、重構都必須走 OpenSpec 流程**，不可直接修改程式碼。
+- 收到需求後，先判斷是否需要進入探索模式（`openspec-explore`），再使用 `openspec-propose` 建立變更提案（proposal / design / tasks）。
+- 提案經使用者確認後，使用 `openspec-apply-change` 逐步實作 tasks。
+- 實作完成後，使用 `openspec-archive-change` 歸檔變更。
+- 若使用者未指定 change name，必須主動詢問或從對話上下文推斷。
+
+# 溝通語言（強制）
+
+- **所有回覆、說明、註解、commit 訊息建議，一律使用繁體中文（zh-TW）。**
+- 程式碼、指令、技術術語、JSON/YAML 區塊內容除外。
+
 === foundation rules ===
 
 # Laravel Boost Guidelines
