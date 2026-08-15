@@ -5,8 +5,8 @@ namespace App\Filament\Resources\ThreadsApps\Tables;
 use App\Models\ThreadsApp;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -40,7 +40,6 @@ class ThreadsAppsTable
                 DeleteAction::make(),
             ])
             ->toolbarActions([
-                self::bindAccountAction(),
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
