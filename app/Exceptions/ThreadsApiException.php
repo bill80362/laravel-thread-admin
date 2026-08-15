@@ -37,4 +37,18 @@ class ThreadsApiException extends Exception
             || str_contains(strtolower($this->message), 'rate limit')
             || str_contains(strtolower($this->message), 'limit');
     }
+
+    /**
+     * Whether the error is temporary and worth retrying.
+     */
+    public function isRetryable(): bool
+    {
+        if ($this->isTokenInvalid() || $this->isRateLimited()) {
+            return false;
+        }
+
+        return $this->httpStatus === null
+            || $this->httpStatus >= 500
+            || str_contains(strtolower($this->message), 'resource does not exist');
+    }
 }

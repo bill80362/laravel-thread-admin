@@ -21,6 +21,7 @@ class Post extends Model
         'scheduled_at',
         'published_at',
         'status',
+        'publish_attempts',
         'error_message',
     ];
 

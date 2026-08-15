@@ -20,6 +20,16 @@ class PublishScheduledPost implements ShouldQueue
      */
     public const PUBLISH_DELAY_SECONDS = 30;
 
+    /**
+     * Maximum number of publish attempts before marking a post as failed.
+     */
+    public const MAX_PUBLISH_ATTEMPTS = 3;
+
+    /**
+     * Base backoff (in seconds) multiplied by the attempt number.
+     */
+    public const RETRY_BACKOFF_SECONDS = 60;
+
     public function __construct(
         private readonly int $postId,
         private readonly ?string $creationId = null,
