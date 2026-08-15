@@ -33,7 +33,7 @@ class PostResourceTest extends TestCase
         $this->assertDatabaseHas('posts', [
             'threads_account_id' => $account->id,
             'text' => '這是一篇測試貼文',
-            'status' => PostStatus::Draft->value,
+            'status' => PostStatus::Scheduled->value,
         ]);
     }
 
