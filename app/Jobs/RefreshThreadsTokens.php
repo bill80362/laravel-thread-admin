@@ -18,12 +18,12 @@ class RefreshThreadsTokens implements ShouldQueue
      */
     public const REFRESH_THRESHOLD_DAYS = 7;
 
-    public function __construct(private readonly ThreadsClient $threads) {}
+    public function __construct() {}
 
     /**
      * Refresh long-lived tokens that are within the refresh threshold.
      */
-    public function handle(): void
+    public function handle(ThreadsClient $threads): void
     {
         $accounts = ThreadsAccount::query()
             ->where('status', ThreadsAccountStatus::Active)
@@ -32,7 +32,7 @@ class RefreshThreadsTokens implements ShouldQueue
 
         foreach ($accounts as $account) {
             try {
-                $result = $this->threads->refreshLongLivedToken($account->access_token);
+                $result = $threads->refreshLongLivedToken($account->access_token);
 
                 $account->update([
                     'access_token' => $result['access_token'],

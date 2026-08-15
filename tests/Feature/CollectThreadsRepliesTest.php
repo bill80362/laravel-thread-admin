@@ -33,8 +33,8 @@ class CollectThreadsRepliesTest extends TestCase
                 ['id' => 'reply-2', 'username' => 'user2', 'text' => 'hello'],
             ]);
 
-        $job = new CollectThreadsReplies($threads);
-        $job->handle();
+        $job = new CollectThreadsReplies;
+        $job->handle($threads);
 
         $this->assertDatabaseHas('replies', [
             'threads_reply_id' => 'reply-1',
@@ -69,8 +69,8 @@ class CollectThreadsRepliesTest extends TestCase
                 ['id' => 'reply-new', 'username' => 'user2', 'text' => 'hello'],
             ]);
 
-        $job = new CollectThreadsReplies($threads);
-        $job->handle();
+        $job = new CollectThreadsReplies;
+        $job->handle($threads);
 
         $this->assertSame(2, Reply::query()->count());
         $this->assertDatabaseHas('replies', ['threads_reply_id' => 'reply-new']);
@@ -88,8 +88,8 @@ class CollectThreadsRepliesTest extends TestCase
             ->once()
             ->andThrow(new ThreadsApiException('Invalid OAuth access token', 190, 401));
 
-        $job = new CollectThreadsReplies($threads);
-        $job->handle();
+        $job = new CollectThreadsReplies;
+        $job->handle($threads);
 
         $account->refresh();
 
@@ -108,8 +108,8 @@ class CollectThreadsRepliesTest extends TestCase
         $threads = Mockery::mock(ThreadsClient::class);
         $threads->shouldReceive('getReplies')->never();
 
-        $job = new CollectThreadsReplies($threads);
-        $job->handle();
+        $job = new CollectThreadsReplies;
+        $job->handle($threads);
 
         $this->assertSame(0, Reply::query()->count());
     }

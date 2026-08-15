@@ -22,12 +22,12 @@ class CollectThreadsReplies implements ShouldQueue
      */
     public const SYNC_INTERVAL_MINUTES = 5;
 
-    public function __construct(private readonly ThreadsClient $threads) {}
+    public function __construct() {}
 
     /**
      * Poll replies for every active account's published posts.
      */
-    public function handle(): void
+    public function handle(ThreadsClient $threads): void
     {
         $accounts = ThreadsAccount::query()
             ->where('status', ThreadsAccountStatus::Active)
@@ -38,11 +38,11 @@ class CollectThreadsReplies implements ShouldQueue
             ->get();
 
         foreach ($accounts as $account) {
-            $this->collectForAccount($account);
+            $this->collectForAccount($account, $threads);
         }
     }
 
-    private function collectForAccount(ThreadsAccount $account): void
+    private function collectForAccount(ThreadsAccount $account, ThreadsClient $threads): void
     {
         $publishedPosts = $account->posts()
             ->whereNotNull('threads_media_id')
@@ -50,7 +50,7 @@ class CollectThreadsReplies implements ShouldQueue
 
         try {
             foreach ($publishedPosts as $post) {
-                $replies = $this->threads->getReplies($account, $post->threads_media_id);
+                $replies = $threads->getReplies($account, $post->threads_media_id);
 
                 foreach ($replies as $reply) {
                     Reply::query()->firstOrCreate(
