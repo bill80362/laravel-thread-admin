@@ -1,0 +1,43 @@
+# reply-manual-create Specification
+
+## Purpose
+定義管理者手動新增回覆記錄的功能，補齊回覆面板目前缺少的新增表單與建立頁面。
+
+## Requirements
+
+### Requirement: 手動新增回覆表單
+系統 SHALL 提供完整的回覆新增表單，包含來源帳號、所屬貼文（可選）、留言者名稱、留言內容等欄位。
+
+#### Scenario: 成功建立回覆
+- **WHEN** 管理者填寫所有必填欄位（來源帳號、留言者、留言內容）
+- **AND** 點擊建立按鈕
+- **THEN** 系統 SHALL 建立一筆新的回覆記錄
+- **AND** `source` 自動設為 `manual`
+- **AND** `status` 自動設為 `new`
+- **AND** 頁面重新導向至回覆列表
+
+#### Scenario: 必填欄位驗證失敗
+- **WHEN** 管理者未填寫來源帳號、留言者或留言內容
+- **AND** 點擊建立按鈕
+- **THEN** 系統 SHALL 顯示對應的驗證錯誤訊息
+- **AND** 不建立回覆記錄
+
+#### Scenario: 可選欄位留空
+- **WHEN** 管理者未選擇所屬貼文
+- **AND** 點擊建立按鈕
+- **THEN** 系統 SHALL 建立回覆記錄，`post_id` 為 null
+
+### Requirement: ReplySource 新增 Manual 來源
+系統 SHALL 在 `ReplySource` enum 中提供 `Manual` 選項，用於標記手動建立的回覆。
+
+#### Scenario: 手動建立的回覆標記為 manual
+- **WHEN** 透過新增頁面建立回覆
+- **THEN** 回覆的 `source` 欄位 SHALL 為 `manual`
+
+### Requirement: 新增頁面路由
+系統 SHALL 提供獨立的回覆新增頁面路由。
+
+#### Scenario: 導航至新增頁面
+- **WHEN** 管理者在回覆列表頁點擊「新增回覆」按鈕
+- **THEN** 系統 SHALL 導航至 `/admin/replies/create` 頁面
+- **AND** 顯示完整的回覆新增表單

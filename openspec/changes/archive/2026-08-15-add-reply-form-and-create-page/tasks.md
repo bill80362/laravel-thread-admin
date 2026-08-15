@@ -28,5 +28,5 @@
 ## 6. 驗證
 
 - [x] 6.1 執行 `vendor/bin/pint --dirty --format agent` 格式化
-- [ ] 6.2 於瀏覽器確認 `admin/replies/create` 可正常載入並建立回覆
-- [ ] 6.3 確認列表頁的「新增回覆」按鈕導向正確的建立頁面
+- [x] 6.2 於瀏覽器確認 `admin/replies/create` 可正常載入並建立回覆
+- [x] 6.3 確認列表頁的「新增回覆」按鈕導向正確的建立頁面
