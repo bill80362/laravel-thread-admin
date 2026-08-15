@@ -41,3 +41,17 @@
 - **WHEN** 管理者在回覆列表頁點擊「新增回覆」按鈕
 - **THEN** 系統 SHALL 導航至 `/admin/replies/create` 頁面
 - **AND** 顯示完整的回覆新增表單
+
+### Requirement: 回覆資源複數標籤
+系統 SHALL 使用「回覆」作為回覆資源的複數標籤，而非自動產生的「回覆s」。
+
+#### Scenario: 回覆列表頁標題顯示
+- **WHEN** 管理者進入回覆列表頁
+- **THEN** 頁面標題 SHALL 顯示「回覆」而非「回覆s」
+
+### Requirement: 導覽選單排序
+系統 SHALL 依以下順序排列左側導覽選單中的資源項目：Dashboard → APP → 帳號 → 發文 → 回覆。
+
+#### Scenario: 左側選單顯示順序
+- **WHEN** 管理者登入後台
+- **THEN** 左側導覽選單 SHALL 依序顯示 Dashboard、APP、帳號、發文、回覆
