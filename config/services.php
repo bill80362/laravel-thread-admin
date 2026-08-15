@@ -36,9 +36,7 @@ return [
     ],
 
     'threads' => [
-        'client_id' => env('THREADS_CLIENT_ID'),
-        'client_secret' => env('THREADS_CLIENT_SECRET'),
-        'redirect_uri' => env('THREADS_REDIRECT_URI'),
+        'redirect_uri' => rtrim((string) config('app.url'), '/').'/threads/oauth/callback',
     ],
 
 ];
