@@ -26,21 +26,7 @@ class PostsTable
 
                 TextColumn::make('status')
                     ->label('狀態')
-                    ->badge()
-                    ->color(fn (PostStatus $state): string => match ($state) {
-                        PostStatus::Draft => 'gray',
-                        PostStatus::Scheduled => 'warning',
-                        PostStatus::Publishing => 'info',
-                        PostStatus::Published => 'success',
-                        PostStatus::Failed => 'danger',
-                    })
-                    ->formatStateUsing(fn (PostStatus $state): string => match ($state) {
-                        PostStatus::Draft => '草稿',
-                        PostStatus::Scheduled => '排程中',
-                        PostStatus::Publishing => '發佈中',
-                        PostStatus::Published => '已發佈',
-                        PostStatus::Failed => '失敗',
-                    }),
+                    ->badge(),
 
                 TextColumn::make('scheduled_at')
                     ->label('排程時間')

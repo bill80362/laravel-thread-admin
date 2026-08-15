@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Replies;
 
+use App\Filament\Resources\Replies\Pages\CreateReply;
 use App\Filament\Resources\Replies\Pages\ListReplies;
 use App\Filament\Resources\Replies\Schemas\ReplyForm;
 use App\Filament\Resources\Replies\Tables\RepliesTable;
@@ -43,6 +44,7 @@ class ReplyResource extends Resource
     {
         return [
             'index' => ListReplies::route('/'),
+            'create' => CreateReply::route('/create'),
         ];
     }
 }

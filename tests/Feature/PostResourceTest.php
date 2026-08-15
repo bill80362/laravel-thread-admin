@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\PostStatus;
 use App\Filament\Resources\Posts\Pages\CreatePost;
+use App\Filament\Resources\Posts\Pages\EditPost;
 use App\Filament\Resources\Posts\Pages\ListPosts;
 use App\Models\Post;
 use App\Models\ThreadsAccount;
@@ -72,5 +73,33 @@ class PostResourceTest extends TestCase
         ]);
 
         $this->assertSame(PostStatus::Published, $post->status);
+    }
+
+    public function test_edit_post_loads_status_info_section(): void
+    {
+        $account = ThreadsAccount::factory()->create();
+        $post = Post::factory()->create([
+            'threads_account_id' => $account->id,
+        ]);
+
+        Livewire::actingAs(User::factory()->create())
+            ->test(EditPost::class, ['record' => $post->id])
+            ->assertOk()
+            ->assertSee('貼文狀態資訊');
+    }
+
+    public function test_post_status_has_label_and_color(): void
+    {
+        $this->assertSame('草稿', PostStatus::Draft->getLabel());
+        $this->assertSame('排程中', PostStatus::Scheduled->getLabel());
+        $this->assertSame('發佈中', PostStatus::Publishing->getLabel());
+        $this->assertSame('已發佈', PostStatus::Published->getLabel());
+        $this->assertSame('失敗', PostStatus::Failed->getLabel());
+
+        $this->assertSame('gray', PostStatus::Draft->getColor());
+        $this->assertSame('warning', PostStatus::Scheduled->getColor());
+        $this->assertSame('info', PostStatus::Publishing->getColor());
+        $this->assertSame('success', PostStatus::Published->getColor());
+        $this->assertSame('danger', PostStatus::Failed->getColor());
     }
 }

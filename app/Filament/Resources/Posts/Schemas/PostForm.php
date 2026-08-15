@@ -7,7 +7,10 @@ use App\Models\ThreadsAccount;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\Operation;
 
 class PostForm
 {
@@ -15,6 +18,22 @@ class PostForm
     {
         return $schema
             ->components([
+                Section::make('貼文狀態資訊')
+                    ->schema([
+                        TextEntry::make('status')
+                            ->label('狀態')
+                            ->badge(),
+                        TextEntry::make('published_at')
+                            ->label('發佈時間')
+                            ->dateTime('Y-m-d H:i')
+                            ->placeholder('-'),
+                        TextEntry::make('error_message')
+                            ->label('錯誤訊息')
+                            ->placeholder('-'),
+                    ])
+                    ->columns(3)
+                    ->hiddenOn(Operation::Create),
+
                 Select::make('threads_account_id')
                     ->label('目標帳號')
                     ->relationship('threadsAccount', 'username')
