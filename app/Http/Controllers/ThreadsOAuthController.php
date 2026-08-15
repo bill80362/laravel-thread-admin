@@ -7,6 +7,7 @@ use App\Models\ThreadsAccount;
 use App\Services\ThreadsClient;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 
 class ThreadsOAuthController extends Controller
@@ -57,7 +58,7 @@ class ThreadsOAuthController extends Controller
                 [
                     'username' => $profile['username'] ?? $profile['id'],
                     'name' => $profile['name'] ?? null,
-                    'avatar' => $profile['profile_picture_url'] ?? null,
+                    'avatar' => null,
                     'access_token' => $longToken['access_token'],
                     'token_expires_at' => now()->addSeconds($longToken['expires_in'] ?? 5184000),
                     'status' => ThreadsAccountStatus::Active,
@@ -68,6 +69,8 @@ class ThreadsOAuthController extends Controller
                 ->to(URL::route('filament.admin.resources.threads-accounts.index'))
                 ->with('success', "已成功綁定帳號 @{$account->username}");
         } catch (\Throwable $e) {
+            Log::error('Threads OAuth 綁定失敗', ['exception' => $e]);
+
             return $this->fail('綁定失敗，請重新授權');
         }
     }

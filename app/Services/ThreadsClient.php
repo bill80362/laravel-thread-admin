@@ -19,6 +19,8 @@ class ThreadsClient
 {
     private const API_BASE = 'https://graph.threads.net/v1.0';
 
+    private const OAUTH_BASE = 'https://graph.threads.net';
+
     /**
      * Scopes requested during the OAuth authorization window.
      */
@@ -60,7 +62,7 @@ class ThreadsClient
             'grant_type' => 'authorization_code',
             'redirect_uri' => Config::get('services.threads.redirect_uri'),
             'code' => $code,
-        ]);
+        ], self::OAUTH_BASE);
 
         return $data['access_token'];
     }
@@ -76,7 +78,7 @@ class ThreadsClient
             'grant_type' => 'th_exchange_token',
             'client_secret' => Config::get('services.threads.client_secret'),
             'access_token' => $shortToken,
-        ]);
+        ], self::OAUTH_BASE);
     }
 
     /**
@@ -89,18 +91,18 @@ class ThreadsClient
         return $this->request('GET', '/refresh_access_token', [
             'grant_type' => 'th_refresh_token',
             'access_token' => $token,
-        ]);
+        ], self::OAUTH_BASE);
     }
 
     /**
      * Retrieve the authenticated user's Threads profile.
      *
-     * @return array{id: string, username: string, name?: string, profile_picture_url?: string}
+     * @return array{id: string, username: string, name?: string}
      */
     public function getProfile(string $token): array
     {
         return $this->request('GET', '/me', [
-            'fields' => 'id,username,name,profile_picture_url',
+            'fields' => 'id,username,name',
             'access_token' => $token,
         ]);
     }
@@ -174,12 +176,12 @@ class ThreadsClient
      * @param  array<string, mixed>  $params
      * @return array<string, mixed>
      */
-    private function request(string $method, string $path, array $params): array
+    private function request(string $method, string $path, array $params, string $base = self::API_BASE): array
     {
         $options = $method === 'GET' ? ['query' => $params] : ['form_params' => $params];
 
         try {
-            $response = $this->http->request($method, self::API_BASE.$path, $options);
+            $response = $this->http->request($method, $base.$path, $options);
         } catch (ClientException $e) {
             throw $this->toApiException($e);
         } catch (GuzzleException $e) {
