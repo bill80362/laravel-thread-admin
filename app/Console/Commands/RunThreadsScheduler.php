@@ -8,6 +8,7 @@ use App\Jobs\PublishScheduledPost;
 use App\Jobs\RefreshThreadsTokens;
 use App\Models\Post;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class RunThreadsScheduler extends Command
 {
@@ -29,25 +30,43 @@ class RunThreadsScheduler extends Command
 
     private function dispatchDuePosts(): void
     {
-        $duePosts = Post::query()
-            ->where('status', PostStatus::Scheduled)
-            ->where('scheduled_at', '<=', now())
-            ->pluck('id');
+        try {
+            $duePosts = Post::query()
+                ->where('status', PostStatus::Scheduled)
+                ->where('scheduled_at', '<=', now())
+                ->pluck('id');
 
-        foreach ($duePosts as $postId) {
-            PublishScheduledPost::dispatch($postId);
+            foreach ($duePosts as $postId) {
+                PublishScheduledPost::dispatch($postId);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Failed to dispatch due posts.', [
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 
     private function dispatchReplyCollection(): void
     {
-        CollectThreadsReplies::dispatch();
+        try {
+            CollectThreadsReplies::dispatch();
+        } catch (\Throwable $e) {
+            Log::warning('Failed to dispatch reply collection.', [
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     private function dispatchTokenRefresh(): void
     {
-        if (now()->hour === 0) {
-            RefreshThreadsTokens::dispatch();
+        try {
+            if (now()->hour === 0) {
+                RefreshThreadsTokens::dispatch();
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Failed to dispatch token refresh.', [
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 }

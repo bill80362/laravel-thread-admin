@@ -12,7 +12,7 @@ class CreatePost extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        if (!empty($data['scheduled_at'])) {
+        if (! empty($data['scheduled_at'])) {
             $data['status'] = PostStatus::Scheduled->value;
         }
 
