@@ -49,13 +49,8 @@ php artisan make:filament-user
 2. 記下 **Threads App ID** 與 **App Secret**（與 Facebook App ID 不同）
 3. 在 App Dashboard → **App roles** → **Roles** 新增 **Threads Tester**
 4. 設定 OAuth redirect URI：`https://你的網域/threads/oauth/callback`
-5. 設定 `.env`：
 
-```env
-THREADS_CLIENT_ID=你的Threads_App_ID
-THREADS_CLIENT_SECRET=你的App_Secret
-THREADS_REDIRECT_URI=https://你的網域/threads/oauth/callback
-```
+> **注意**：`redirect_uri` 由 `APP_URL` 自動推導（`{APP_URL}/threads/oauth/callback`），無需在 `.env` 額外設定。
 
 ### 需要的權限
 
@@ -68,23 +63,58 @@ THREADS_REDIRECT_URI=https://你的網域/threads/oauth/callback
 
 > **注意**：測試階段使用 Threads Tester 即可。正式上線需通過 **App Review** 取得 Advanced Access。
 
+## 多 App 管理
+
+本平台支援一個登入人員管理**多個 Meta App**，每個 App 底下各自綁定多個 Threads 帳號。
+
+```
+登入人員
+  └─ Threads App A（Meta App 1）
+  │    ├─ Threads 帳號 @account_1
+  │    └─ Threads 帳號 @account_2
+  └─ Threads App B（Meta App 2）
+       └─ Threads 帳號 @account_3
+```
+
+### 新增 Threads App
+
+進入 **Threads App** 頁面 → 點擊「新增」→ 填入 App 名稱、Client ID、Client Secret → 儲存。
+
+> `client_id` 與 `client_secret` 儲存在資料庫中（`client_secret` 以加密形式儲存），不再寫在 `.env`。
+
+### 綁定 Threads 帳號
+
+進入 **Threads App** 頁面 → 在目標 App 點擊「綁定 Threads 帳號」→ 在 Threads 授權頁同意 → 自動導回後台。
+
+綁定成功後，帳號會出現在 **Threads 帳號** 頁面，並標示所屬 App。
+
+### 重新授權
+
+當帳號 token 失效（狀態顯示「需重新授權」），在 **Threads 帳號** 頁面點擊「重新授權」即可更新 token，不需先解除綁定。
+
 ## OAuth 綁定流程
 
 ```
-管理員點擊「綁定帳號」
+管理員在 Threads App 點擊「綁定帳號」
        │
        ▼
-跳轉 Threads 授權頁面
+系統產生 OAuth state（存 DB，含 App 身分與過期時間）
        │
        ▼
-使用者同意授權 → 回調取得授權碼 (1hr 有效)
+跳轉 Threads 授權頁面（使用該 App 的 client_id）
        │
        ▼
-系統交換短效 token (1hr) → 再交換長效 token (60天)
+使用者同意授權 → 回調取得授權碼 + state
+       │
+       ▼
+系統解析 state → 取得發起的 App → 用 App 憑證交換 token
+       │
+       ▼
+短效 token (1hr) → 長效 token (60天) → 存入 threads_accounts
        │
        ▼
 每日自動檢查，到期前 7 天自動續命
-續命失敗 → 標記「需重新授權」→ Dashboard 顯示警告
+續命失敗 → 標記「需重新授權」→ 可點擊「重新授權」更新
 ```
 
 ## 排程與 Queue 設定
@@ -105,11 +135,23 @@ php artisan queue:work --tries=3
 
 ## 操作說明
 
-### 1. 綁定 Threads 帳號
+### 1. 管理 Threads App
 
-進入 **Threads 帳號** 頁面 → 點擊「綁定 Threads 帳號」→ 在 Threads 授權頁同意 → 自動導回後台。
+進入 **Threads App** 頁面 → 點擊「新增」→ 填入 App 名稱、Client ID、Client Secret → 儲存。
 
-### 2. 排程發文
+每個登入人員只能看到自己建立的 App。
+
+### 2. 綁定 Threads 帳號
+
+進入 **Threads App** 頁面 → 在目標 App 點擊「綁定 Threads 帳號」→ 在 Threads 授權頁同意 → 自動導回後台。
+
+綁定成功後，帳號會出現在 **Threads 帳號** 頁面，並標示所屬 App。可依 App 篩選帳號列表。
+
+### 3. 重新授權
+
+當帳號 token 失效（狀態顯示「需重新授權」），在 **Threads 帳號** 頁面點擊「重新授權」即可更新 token，不需先解除綁定。
+
+### 4. 排程發文
 
 進入 **排程發文** 頁面 → 點擊「新增」→ 選擇目標帳號、輸入貼文內容（≤500 字）、設定發佈時間 → 儲存。
 
@@ -118,15 +160,15 @@ php artisan queue:work --tries=3
 2. 等待約 30 秒
 3. 發佈至 Threads
 
-### 3. 查看回覆
+### 5. 查看回覆
 
 進入 **回覆面板** → 系統每 5 分鐘自動拉取各帳號最新回覆 → 依帳號/狀態篩選。
 
-### 4. 快速回覆
+### 6. 快速回覆
 
 在回覆面板點擊「回覆」→ 輸入內容 → 送出。或點擊「忽略」標記不需處理的回覆。
 
-### 5. Dashboard
+### 7. Dashboard
 
 首頁顯示：
 - 已綁定帳號數
