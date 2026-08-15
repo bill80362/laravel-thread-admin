@@ -4,6 +4,7 @@ namespace Tests\Unit;
 
 use App\Exceptions\ThreadsApiException;
 use App\Models\ThreadsAccount;
+use App\Models\ThreadsApp;
 use App\Services\ThreadsClient;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ClientException;
@@ -32,19 +33,29 @@ class ThreadsClientTest extends TestCase
 
     public function test_exchange_code_for_short_token_returns_token(): void
     {
+        $app = ThreadsApp::factory()->create([
+            'client_id' => 'test-client-id',
+            'client_secret' => 'test-client-secret',
+        ]);
+
         $this->http->shouldReceive('request')
             ->once()
             ->andReturn(new Response(200, [], json_encode([
                 'access_token' => 'short-token',
             ])));
 
-        $token = $this->client->exchangeCodeForShortToken('code');
+        $token = $this->client->exchangeCodeForShortToken($app, 'code');
 
         $this->assertSame('short-token', $token);
     }
 
     public function test_exchange_short_for_long_token_returns_token_and_expiry(): void
     {
+        $app = ThreadsApp::factory()->create([
+            'client_id' => 'test-client-id',
+            'client_secret' => 'test-client-secret',
+        ]);
+
         $this->http->shouldReceive('request')
             ->once()
             ->andReturn(new Response(200, [], json_encode([
@@ -52,7 +63,7 @@ class ThreadsClientTest extends TestCase
                 'expires_in' => 5184000,
             ])));
 
-        $result = $this->client->exchangeShortForLongToken('short-token');
+        $result = $this->client->exchangeShortForLongToken($app, 'short-token');
 
         $this->assertSame('long-token', $result['access_token']);
         $this->assertSame(5184000, $result['expires_in']);

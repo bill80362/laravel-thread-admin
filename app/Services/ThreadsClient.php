@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Exceptions\ThreadsApiException;
 use App\Models\ThreadsAccount;
+use App\Models\ThreadsApp;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\GuzzleException;
@@ -38,10 +39,10 @@ class ThreadsClient
     /**
      * Build the Threads OAuth authorization URL.
      */
-    public function buildAuthorizationUrl(string $state): string
+    public function buildAuthorizationUrl(ThreadsApp $app, string $state): string
     {
         $query = http_build_query([
-            'client_id' => Config::get('services.threads.client_id'),
+            'client_id' => $app->client_id,
             'redirect_uri' => Config::get('services.threads.redirect_uri'),
             'scope' => implode(',', self::SCOPES),
             'response_type' => 'code',
@@ -54,11 +55,11 @@ class ThreadsClient
     /**
      * Exchange an authorization code for a short-lived access token.
      */
-    public function exchangeCodeForShortToken(string $code): string
+    public function exchangeCodeForShortToken(ThreadsApp $app, string $code): string
     {
         $data = $this->request('POST', '/oauth/access_token', [
-            'client_id' => Config::get('services.threads.client_id'),
-            'client_secret' => Config::get('services.threads.client_secret'),
+            'client_id' => $app->client_id,
+            'client_secret' => $app->client_secret,
             'grant_type' => 'authorization_code',
             'redirect_uri' => Config::get('services.threads.redirect_uri'),
             'code' => $code,
@@ -72,11 +73,11 @@ class ThreadsClient
      *
      * @return array{access_token: string, expires_in: int}
      */
-    public function exchangeShortForLongToken(string $shortToken): array
+    public function exchangeShortForLongToken(ThreadsApp $app, string $shortToken): array
     {
         return $this->request('GET', '/access_token', [
             'grant_type' => 'th_exchange_token',
-            'client_secret' => Config::get('services.threads.client_secret'),
+            'client_secret' => $app->client_secret,
             'access_token' => $shortToken,
         ], self::OAUTH_BASE);
     }
