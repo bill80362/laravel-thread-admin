@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Replies\Widgets;
 
 use App\Jobs\CollectThreadsReplies;
+use App\Jobs\PublishScheduledPost;
 use Filament\Widgets\Widget;
 
 class RepliesSyncNotice extends Widget
@@ -19,6 +20,7 @@ class RepliesSyncNotice extends Widget
     {
         return [
             'syncInterval' => CollectThreadsReplies::SYNC_INTERVAL_MINUTES,
+            'publishDelaySeconds' => PublishScheduledPost::PUBLISH_DELAY_SECONDS,
         ];
     }
 }
