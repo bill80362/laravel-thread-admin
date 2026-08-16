@@ -32,6 +32,7 @@ class ListRepliesTool extends Tool
             'author_username' => $reply->author_username,
             'text' => $reply->text,
             'status' => $reply->status->value,
+            'error_message' => $reply->error_message,
             'replied_at' => $reply->replied_at,
         ]);
 

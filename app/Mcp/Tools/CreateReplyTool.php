@@ -11,7 +11,7 @@ use Laravel\Mcp\ResponseFactory;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Tool;
 
-#[Description('建立一筆手動回覆記錄。來源與狀態會自動設為 manual 與 new。')]
+#[Description('建立一筆貼文回覆並發佈至 Threads，需指定帳號、目標貼文與回覆內容。')]
 class CreateReplyTool extends Tool
 {
     /**
@@ -21,19 +21,21 @@ class CreateReplyTool extends Tool
     {
         $data = $request->validate([
             'threads_account_id' => ['required', 'integer', 'exists:threads_accounts,id'],
-            'post_id' => ['nullable', 'integer', 'exists:posts,id'],
-            'author_username' => ['required', 'string', 'max:255'],
+            'post_id' => ['required', 'integer', 'exists:posts,id'],
             'text' => ['required', 'string', 'max:500'],
         ]);
 
-        $reply = $replies->create($data);
+        $reply = $replies->createPostReply(
+            (int) $data['threads_account_id'],
+            (int) $data['post_id'],
+            $data['text'],
+        );
 
         return Response::structured([
             'reply' => [
                 'id' => $reply->id,
                 'threads_account_id' => $reply->threads_account_id,
                 'post_id' => $reply->post_id,
-                'author_username' => $reply->author_username,
                 'text' => $reply->text,
                 'status' => $reply->status->value,
             ],
@@ -52,12 +54,10 @@ class CreateReplyTool extends Tool
                 ->description('來源 Threads 帳號 ID')
                 ->required(),
             'post_id' => $schema->integer()
-                ->description('所屬貼文 ID（可選）'),
-            'author_username' => $schema->string()
-                ->description('留言者使用者名稱（不含 @）')
+                ->description('目標貼文 ID')
                 ->required(),
             'text' => $schema->string()
-                ->description('留言內容（最多 500 字元）')
+                ->description('回覆內容（最多 500 字元）')
                 ->required(),
         ];
     }

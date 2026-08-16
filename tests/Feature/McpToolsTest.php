@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\PublishReply;
 use App\Mcp\Servers\ThreadsMcpServer;
 use App\Mcp\Tools\CreatePostTool;
 use App\Mcp\Tools\CreateReplyTool;
@@ -13,6 +14,7 @@ use App\Models\Post;
 use App\Models\Reply;
 use App\Models\ThreadsAccount;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Testing\Fluent\AssertableJson;
 use Tests\TestCase;
 
@@ -105,39 +107,37 @@ class McpToolsTest extends TestCase
                 ->etc());
     }
 
-    public function test_create_reply_creates_manual_reply(): void
+    public function test_create_reply_requires_post(): void
     {
         $account = ThreadsAccount::factory()->create();
 
         ThreadsMcpServer::tool(CreateReplyTool::class, [
             'threads_account_id' => $account->id,
-            'author_username' => 'commenter',
+            'text' => '缺少貼文的回覆',
+        ])->assertHasErrors();
+    }
+
+    public function test_create_reply_creates_post_reply(): void
+    {
+        Queue::fake();
+
+        $account = ThreadsAccount::factory()->create();
+        $post = Post::factory()->published()->create(['threads_account_id' => $account->id]);
+
+        ThreadsMcpServer::tool(CreateReplyTool::class, [
+            'threads_account_id' => $account->id,
+            'post_id' => $post->id,
             'text' => '來自 MCP 的回覆',
         ])->assertOk();
 
         $this->assertDatabaseHas('replies', [
             'threads_account_id' => $account->id,
-            'author_username' => 'commenter',
+            'post_id' => $post->id,
             'text' => '來自 MCP 的回覆',
             'source' => 'manual',
             'status' => 'new',
         ]);
-    }
 
-    public function test_create_reply_without_post_sets_null_post_id(): void
-    {
-        $account = ThreadsAccount::factory()->create();
-
-        ThreadsMcpServer::tool(CreateReplyTool::class, [
-            'threads_account_id' => $account->id,
-            'author_username' => 'commenter',
-            'text' => '無貼文回覆',
-        ])->assertOk();
-
-        $this->assertDatabaseHas('replies', [
-            'threads_account_id' => $account->id,
-            'text' => '無貼文回覆',
-            'post_id' => null,
-        ]);
+        Queue::assertPushed(PublishReply::class, 1);
     }
 }
