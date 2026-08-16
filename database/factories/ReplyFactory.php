@@ -28,6 +28,8 @@ class ReplyFactory extends Factory
             'text' => fake()->sentence(),
             'source' => ReplySource::Polling,
             'status' => ReplyStatus::New,
+            'error_message' => null,
+            'publish_attempts' => 0,
             'replied_at' => null,
         ];
     }
@@ -40,6 +42,27 @@ class ReplyFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'status' => ReplyStatus::Replied,
             'replied_at' => now(),
+        ]);
+    }
+
+    /**
+     * Indicate that the reply is being published.
+     */
+    public function publishing(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => ReplyStatus::Publishing,
+        ]);
+    }
+
+    /**
+     * Indicate that the reply failed to publish.
+     */
+    public function failed(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => ReplyStatus::Failed,
+            'error_message' => '發佈失敗',
         ]);
     }
 
