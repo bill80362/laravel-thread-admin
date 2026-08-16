@@ -4,7 +4,6 @@ namespace App\Filament\Resources\Replies\Schemas;
 
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
 
 class ReplyForm
@@ -20,19 +19,13 @@ class ReplyForm
                     ->required(),
 
                 Select::make('post_id')
-                    ->label('所屬貼文')
-                    ->relationship('post', 'text')
+                    ->label('目標貼文')
+                    ->relationship('post', 'text', fn ($query) => $query->whereNotNull('threads_media_id'))
                     ->getOptionLabelFromRecordUsing(fn ($record) => mb_strimwidth($record->text, 0, 40, '...'))
-                    ->nullable(),
-
-                TextInput::make('author_username')
-                    ->label('留言者')
-                    ->prefix('@')
-                    ->required()
-                    ->maxLength(255),
+                    ->required(),
 
                 Textarea::make('text')
-                    ->label('留言內容')
+                    ->label('回覆內容')
                     ->required()
                     ->maxLength(500)
                     ->rows(4),
