@@ -5,9 +5,44 @@
 
 - **所有功能開發、Bug 修復、重構都必須走 OpenSpec 流程**，不可直接修改程式碼。
 - 收到需求後，先判斷是否需要進入探索模式（`openspec-explore`），再使用 `openspec-propose` 建立變更提案（proposal / design / tasks）。
-- 提案經使用者確認後，使用 `openspec-apply-change` 逐步實作 tasks。
-- 實作完成後，使用 `openspec-archive-change` 歸檔變更。
+- **實作前必須先詢問使用者，此需求要走「小需求」還是「大需求」流程**，取得回覆後才可開始實作。
 - 若使用者未指定 change name，必須主動詢問或從對話上下文推斷。
+
+## 依需求大小選擇流程
+
+### 小需求 / Bug 修復
+
+1. `opsx:explore` — 探索需求（`openspec-explore`）
+2. `opsx:propose` — 產出規格（`openspec-propose`）
+3. `opsx:apply` — 實作 tasks（`openspec-apply-change`）
+
+### 大需求
+
+1. `opsx:explore` — 探索需求（`openspec-explore`）
+2. `opsx:propose` — 產出規格（`openspec-propose`）
+3. `superpowers:brainstorming` — 了解規格、探索設計
+4. `superpowers:writing-plans` — 拆解任務成可執行計畫
+5. `superpowers:executing-plans` — 開始執行
+
+### 收尾（統一）
+
+- `opsx:archive` — 歸檔變更（`openspec-archive-change`）
+
+## 注意事項
+
+- Superpowers 技能位於 `.github/superpowers/`，使用前應先載入對應的 `SKILL.md`。
+- 除非使用者明確指示，否則遵守 Superpowers 預設流程（如 worktree 隔離）；使用者可指定「不用 worktrees，直接做在 main」。
+- 實作完成後，依使用者偏好提供「建議的 commit 訊息」與「變更檔案清單」，由使用者自行決定何時 commit。
+
+# MCP 開發
+
+- 專案使用 `laravel/mcp` 建立 MCP 伺服器，伺服器類別位於 `app/Mcp/Servers/`，工具位於 `app/Mcp/Tools/`。
+- MCP 伺服器於 `routes/ai.php` 同時以 `Mcp::local`（本地 Artisan）與 `Mcp::web`（HTTP + `auth:api`）註冊。
+- HTTP 模式使用 Laravel Passport OAuth 保護，透過 `Mcp::oauthRoutes()` 註冊 OAuth2 路由。
+- MCP 工具的業務邏輯必須收斂到 `app/Services/` 下的共用 Service，與後台介面遵循相同規則。
+- **MCP 不包含帳號綁定（OAuth 授權）操作**；綁定僅能於後台介面完成。
+- 工具回傳一律使用 `Response::structured([...])`，且不得直接 `toArray()` 洩漏敏感欄位（如 `access_token`）。
+- `handle()` 回傳型別應宣告為 `Response|ResponseFactory`，因 `Response::structured()` 回傳 `ResponseFactory`。
 
 # 溝通語言（強制）
 
