@@ -6,6 +6,7 @@ use App\Enums\ReplySource;
 use App\Enums\ReplyStatus;
 use App\Filament\Resources\Replies\Pages\CreateReply;
 use App\Filament\Resources\Replies\Pages\ListReplies;
+use App\Jobs\PublishReply;
 use App\Models\Post;
 use App\Models\Reply;
 use App\Models\ThreadsAccount;
@@ -72,5 +73,26 @@ class ReplyResourceTest extends TestCase
         Livewire::actingAs(User::factory()->create())
             ->test(ListReplies::class)
             ->assertCanSeeTableRecords($replies);
+    }
+
+    public function test_reply_action_dispatches_publish_job(): void
+    {
+        Queue::fake();
+
+        $account = ThreadsAccount::factory()->create();
+        $reply = Reply::factory()->create([
+            'threads_account_id' => $account->id,
+            'threads_reply_id' => '12345',
+            'status' => ReplyStatus::New,
+        ]);
+
+        Livewire::actingAs(User::factory()->create())
+            ->test(ListReplies::class)
+            ->callTableAction('reply', $reply, ['text' => '回應內容'])
+            ->assertNotified();
+
+        Queue::assertPushed(PublishReply::class, function ($job) use ($reply) {
+            return $job->replyId === $reply->id && $job->replyText === '回應內容';
+        });
     }
 }

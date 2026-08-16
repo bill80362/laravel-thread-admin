@@ -4,7 +4,7 @@ namespace App\Filament\Resources\Replies\Tables;
 
 use App\Enums\ReplyStatus;
 use App\Models\Reply;
-use App\Services\ThreadsClient;
+use App\Services\ReplyService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
@@ -25,7 +25,7 @@ class RepliesTable
 
                 TextColumn::make('author_username')
                     ->label('留言者')
-                    ->formatStateUsing(fn (string $state): string => "@{$state}")
+                    ->formatStateUsing(fn (?string $state): string => $state ? "@{$state}" : '-')
                     ->searchable(),
 
                 TextColumn::make('text')
@@ -40,17 +40,7 @@ class RepliesTable
 
                 TextColumn::make('status')
                     ->label('狀態')
-                    ->badge()
-                    ->color(fn (ReplyStatus $state): string => match ($state) {
-                        ReplyStatus::New => 'danger',
-                        ReplyStatus::Replied => 'success',
-                        ReplyStatus::Ignored => 'gray',
-                    })
-                    ->formatStateUsing(fn (ReplyStatus $state): string => match ($state) {
-                        ReplyStatus::New => '未回覆',
-                        ReplyStatus::Replied => '已回覆',
-                        ReplyStatus::Ignored => '已忽略',
-                    }),
+                    ->badge(),
 
                 TextColumn::make('created_at')
                     ->label('時間')
@@ -67,35 +57,27 @@ class RepliesTable
             ])
             ->recordActions([
                 Action::make('reply')
-                    ->label('回覆')
+                    ->label('回應回覆')
                     ->icon('heroicon-o-arrow-uturn-left')
                     ->visible(fn (Reply $record): bool => $record->status === ReplyStatus::New)
                     ->form([
                         Textarea::make('text')
-                            ->label('回覆內容')
+                            ->label('回應內容')
                             ->required()
                             ->maxLength(500)
                             ->rows(3),
                     ])
-                    ->action(function (Reply $record, array $data, ThreadsClient $threads): void {
-                        $account = $record->threadsAccount;
-
+                    ->action(function (Reply $record, array $data, ReplyService $replies): void {
                         try {
-                            $creationId = $threads->createTextContainer($account, $data['text'], $record->threads_reply_id);
-                            $threads->publishContainer($account, $creationId);
-
-                            $record->update([
-                                'status' => ReplyStatus::Replied,
-                                'replied_at' => now(),
-                            ]);
+                            $replies->publish($record, $data['text']);
 
                             Notification::make()
-                                ->title('已回覆')
+                                ->title('已排程回應')
                                 ->success()
                                 ->send();
                         } catch (\Throwable $e) {
                             Notification::make()
-                                ->title('回覆失敗')
+                                ->title('回應失敗')
                                 ->body($e->getMessage())
                                 ->danger()
                                 ->send();
