@@ -30,6 +30,7 @@
 
 ## 注意事項
 
+- **收到 `opsx:apply` 指令時，必須先詢問使用者要走「小需求」還是「大需求」流程**，因為大需求模式不能使用 `opsx:apply`，需改用 Superpowers 流程（`superpowers:brainstorming` → `superpowers:writing-plans` → `superpowers:executing-plans`）。取得回覆後才可開始實作。
 - Superpowers 技能位於 `.github/superpowers/`，使用前應先載入對應的 `SKILL.md`。
 - 除非使用者明確指示，否則遵守 Superpowers 預設流程（如 worktree 隔離）；使用者可指定「不用 worktrees，直接做在 main」。
 - 實作完成後，依使用者偏好提供「建議的 commit 訊息」與「變更檔案清單」，由使用者自行決定何時 commit。
@@ -43,6 +44,20 @@
 - **MCP 不包含帳號綁定（OAuth 授權）操作**；綁定僅能於後台介面完成。
 - 工具回傳一律使用 `Response::structured([...])`，且不得直接 `toArray()` 洩漏敏感欄位（如 `access_token`）。
 - `handle()` 回傳型別應宣告為 `Response|ResponseFactory`，因 `Response::structured()` 回傳 `ResponseFactory`。
+
+# 使用說明頁面
+
+- 使用說明位於 `app/Filament/Pages/UsageGuide.php`，為 Filament 自訂 Page，內容以 Blade view（`resources/views/filament/pages/usage-guide.blade.php`）呈現。
+- 使用說明以繁體中文撰寫、面向非程式人員、步驟化。
+- 內容中引用的排程間隔、重試次數、發文延遲等數值需取自已實作的常數（如 `PublishScheduledPost::PUBLISH_DELAY_SECONDS`），確保與實作同步。
+- 修改排程相關常數時，需同步更新使用說明中的對應文字。
+
+# MCP 控管
+
+- MCP Token 管理位於 `app/Filament/Resources/McpTokens/`，直接使用 `Laravel\Passport\Token` 作為 model。
+- 列表僅顯示當前登入使用者的 token（`getEloquentQuery()` 限定 `user_id = auth()->id()`）。
+- `Laravel\Passport\Client::$hidden = ['secret']` 已確保 Client secret 不會洩漏，列表勿顯示 secret。
+- 註銷動作使用 `Token::revoke()`（Passport 內建方法）。
 
 # 溝通語言（強制）
 
