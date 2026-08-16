@@ -73,19 +73,6 @@
 - **WHEN** AI agent 呼叫 `list-replies` 並指定帳號、貼文或狀態
 - **THEN** 系統 SHALL 僅回傳符合條件的回覆
 
-### Requirement: 建立手動回覆記錄
-系統 SHALL 提供 `create-reply` 工具，建立一筆手動回覆記錄，其行為與介面手動新增一致。
-
-#### Scenario: 建立回覆記錄
-- **WHEN** AI agent 提供來源帳號、留言者與留言內容呼叫 `create-reply`
-- **THEN** 系統 SHALL 建立一筆回覆記錄
-- **AND** `source` 自動設為 `manual`
-- **AND** `status` 自動設為 `new`
-
-#### Scenario: 可選欄位留空
-- **WHEN** AI agent 未提供所屬貼文呼叫 `create-reply`
-- **THEN** 系統 SHALL 建立回覆記錄，`post_id` 為 null
-
 ### Requirement: 業務邏輯與介面整合
 系統 SHALL 將貼文與回覆的建立／查詢邏輯收斂到共用 Service 層，確保 MCP 工具與後台介面遵循相同業務規則。
 
@@ -119,3 +106,16 @@
 - **WHEN** AI agent 未提供有效 Bearer token 而呼叫 MCP 端點
 - **THEN** 系統 SHALL 回傳 JSON 格式的 401 Unauthenticated 回應
 - **AND** 系統 SHALL 不回傳 HTML 重導向頁面
+
+### Requirement: 建立貼文回覆
+系統 SHALL 提供 `create-reply` 工具，依指定帳號、目標貼文與回覆內容建立一筆貼文回覆並發佈，其行為與後台介面「新增貼文回覆」一致。
+
+#### Scenario: 建立貼文回覆
+- **WHEN** AI agent 提供來源帳號、目標貼文與回覆內容呼叫 `create-reply`
+- **THEN** 系統 SHALL 建立一筆貼文回覆並觸發發佈
+- **AND** `source` 自動設為 `manual`
+
+#### Scenario: 缺少必填欄位
+- **WHEN** AI agent 呼叫 `create-reply` 但缺少來源帳號、目標貼文或回覆內容
+- **THEN** 系統 SHALL 回傳驗證錯誤
+- **AND** 系統 SHALL 不建立回覆
