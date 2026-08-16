@@ -4,28 +4,68 @@ namespace App\Services;
 
 use App\Enums\ReplySource;
 use App\Enums\ReplyStatus;
+use App\Jobs\PublishReply;
+use App\Models\Post;
 use App\Models\Reply;
 use Illuminate\Database\Eloquent\Collection;
+use InvalidArgumentException;
 
 class ReplyService
 {
     /**
-     * 建立一筆手動回覆記錄。
-     *
-     * @param  array{threads_account_id: int, post_id?: int|null, author_username: string, text: string}  $data
+     * 建立一筆貼文回覆並排程發佈到 Threads。
      */
-    public function create(array $data): Reply
+    public function createPostReply(int $threadsAccountId, int $postId, string $text): Reply
     {
+        $post = Post::query()->find($postId);
+
+        if ($post === null || $post->threads_media_id === null) {
+            throw new InvalidArgumentException('目標貼文不存在或尚未發佈，無法回覆');
+        }
+
         $reply = new Reply;
-        $reply->threads_account_id = $data['threads_account_id'];
-        $reply->post_id = $data['post_id'] ?? null;
-        $reply->author_username = $data['author_username'];
-        $reply->text = $data['text'];
+        $reply->threads_account_id = $threadsAccountId;
+        $reply->post_id = $postId;
+        $reply->threads_reply_id = null;
+        $reply->author_username = '';
+        $reply->text = $text;
         $reply->source = ReplySource::Manual;
         $reply->status = ReplyStatus::New;
         $reply->save();
 
+        PublishReply::dispatch($reply->id);
+
         return $reply;
+    }
+
+    /**
+     * 回應一則留言並排程發佈到 Threads。
+     */
+    public function publish(Reply $reply, string $text): void
+    {
+        if ($reply->threads_reply_id === null) {
+            throw new InvalidArgumentException('該留言缺少 Threads ID，無法回應');
+        }
+
+        PublishReply::dispatch($reply->id, null, $text);
+    }
+
+    /**
+     * 推導回覆的發佈目標 ID（回覆留言或回覆貼文）。
+     */
+    public function resolveReplyToId(Reply $reply): string
+    {
+        if ($reply->threads_reply_id !== null) {
+            return $reply->threads_reply_id;
+        }
+
+        $post = $reply->post;
+
+        if ($post === null || $post->threads_media_id === null) {
+            throw new InvalidArgumentException('無法決定回覆目標');
+        }
+
+        return $post->threads_media_id;
     }
 
     /**
