@@ -15,6 +15,7 @@ class ThreadsAccount extends Model
     use HasFactory;
 
     protected $fillable = [
+        'user_id',
         'threads_app_id',
         'threads_user_id',
         'username',
@@ -39,6 +40,16 @@ class ThreadsAccount extends Model
             'last_synced_at' => 'datetime',
             'status' => ThreadsAccountStatus::class,
         ];
+    }
+
+    /**
+     * The user who owns this account.
+     *
+     * @return BelongsTo<User, ThreadsAccount>
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     /**

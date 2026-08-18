@@ -77,6 +77,7 @@ class ThreadsOAuthController extends Controller
 
             $attributes = [
                 'threads_app_id' => $app->id,
+                'user_id' => auth()->id(),
                 'username' => $profile['username'] ?? $profile['id'],
                 'name' => $profile['name'] ?? null,
                 'avatar' => null,

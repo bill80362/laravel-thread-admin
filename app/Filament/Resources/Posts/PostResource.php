@@ -13,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class PostResource extends Resource
 {
@@ -34,6 +35,14 @@ class PostResource extends Resource
     public static function table(Table $table): Table
     {
         return PostsTable::configure($table);
+    }
+
+    /**
+     * 每位登入人員僅能看到自己的資料。
+     */
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->where('user_id', auth()->id());
     }
 
     public static function getRelations(): array

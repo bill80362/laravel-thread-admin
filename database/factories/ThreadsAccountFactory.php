@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Enums\ThreadsAccountStatus;
 use App\Models\ThreadsAccount;
 use App\Models\ThreadsApp;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -20,6 +21,7 @@ class ThreadsAccountFactory extends Factory
     public function definition(): array
     {
         return [
+            'user_id' => User::factory(),
             'threads_app_id' => ThreadsApp::factory(),
             'threads_user_id' => fake()->unique()->numerify('##########'),
             'username' => fake()->unique()->userName(),

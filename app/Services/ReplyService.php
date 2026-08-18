@@ -7,6 +7,7 @@ use App\Enums\ReplyStatus;
 use App\Jobs\PublishReply;
 use App\Models\Post;
 use App\Models\Reply;
+use App\Models\ThreadsAccount;
 use Illuminate\Database\Eloquent\Collection;
 use InvalidArgumentException;
 
@@ -17,13 +18,26 @@ class ReplyService
      */
     public function createPostReply(int $threadsAccountId, int $postId, string $text): Reply
     {
-        $post = Post::query()->find($postId);
+        $userId = auth()->id();
+
+        $account = ThreadsAccount::query()
+            ->where('user_id', $userId)
+            ->find($threadsAccountId);
+
+        if ($account === null) {
+            throw new InvalidArgumentException('帳號不存在或無權存取');
+        }
+
+        $post = Post::query()
+            ->where('user_id', $userId)
+            ->find($postId);
 
         if ($post === null || $post->threads_media_id === null) {
             throw new InvalidArgumentException('目標貼文不存在或尚未發佈，無法回覆');
         }
 
         $reply = new Reply;
+        $reply->user_id = $userId;
         $reply->threads_account_id = $threadsAccountId;
         $reply->post_id = $postId;
         $reply->threads_reply_id = null;
@@ -74,9 +88,11 @@ class ReplyService
      * @param  array{threads_account_id?: int, post_id?: int, status?: string}  $filters
      * @return Collection<int, Reply>
      */
-    public function list(array $filters = []): Collection
+    public function list(array $filters = [], ?int $userId = null): Collection
     {
-        $query = Reply::query()->with(['threadsAccount', 'post']);
+        $userId ??= auth()->id();
+
+        $query = Reply::query()->with(['threadsAccount', 'post'])->where('user_id', $userId);
 
         if (! empty($filters['threads_account_id'])) {
             $query->where('threads_account_id', $filters['threads_account_id']);

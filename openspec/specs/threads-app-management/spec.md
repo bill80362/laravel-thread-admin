@@ -17,11 +17,12 @@
 - **THEN** 系統僅顯示該登入人員建立的 App
 
 ### Requirement: Threads 帳號歸屬於特定 App
-每個 Threads 帳號 SHALL 歸屬於一個 Threads App，綁定流程必須記錄帳號所屬的 App。
+每個 Threads 帳號 SHALL 歸屬於一個 Threads App 與一位使用者（`user_id`），綁定流程必須記錄帳號所屬的 App 與使用者。
 
-#### Scenario: 綁定帳號記錄所屬 App
+#### Scenario: 綁定帳號記錄所屬 App 與使用者
 - **WHEN** 使用者在某個 App 上完成 OAuth 綁定
 - **THEN** 新建立或更新的 Threads 帳號記錄其 `threads_app_id` 指向該 App
+- **AND** 記錄其 `user_id` 為當前登入使用者
 
 ### Requirement: 從 App 發起 OAuth 綁定
 OAuth 綁定流程 SHALL 由特定 App 發起，且授權網址與 token 交換必須使用該 App 的 `client_id` 與 `client_secret`。
@@ -32,12 +33,13 @@ OAuth 綁定流程 SHALL 由特定 App 發起，且授權網址與 token 交換�
 - **AND** token 交換使用該 App 的 `client_id` 與 `client_secret`
 
 ### Requirement: OAuth state 承載 App 身分並儲存於資料庫
-OAuth 流程 SHALL 使用儲存於資料庫、具過期時間的 `state` 值來承載發起的 App 身分，並在回呼時驗證其有效性。
+OAuth 流程 SHALL 使用儲存於資料庫、具過期時間的 `state` 值來承載發起的 App 身分與使用者身分，並在回呼時驗證其有效性。
 
-#### Scenario: state 於回呼時可解析出 App
+#### Scenario: state 於回呼時可解析出 App 與使用者
 - **WHEN** Threads 回呼攜帶 `code` 與 `state`
-- **THEN** 系統解析 `state` 得到發起的 App 身分
+- **THEN** 系統解析 `state` 得到發起的 App 身分與使用者身分
 - **AND** 使用該 App 的憑證交換 token
+- **AND** 驗證 `state` 的 `user_id` 與當前登入使用者一致
 
 #### Scenario: state 失效或不存在
 - **WHEN** 回呼的 `state` 不存在、已過期或格式不合法

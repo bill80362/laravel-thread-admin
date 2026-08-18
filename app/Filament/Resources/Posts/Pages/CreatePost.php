@@ -16,6 +16,8 @@ class CreatePost extends CreateRecord
             $data['status'] = PostStatus::Scheduled->value;
         }
 
+        $data['user_id'] = auth()->id();
+
         return $data;
     }
 }

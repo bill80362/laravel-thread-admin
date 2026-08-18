@@ -15,6 +15,7 @@ class Post extends Model
     use HasFactory;
 
     protected $fillable = [
+        'user_id',
         'threads_account_id',
         'threads_media_id',
         'text',
@@ -37,6 +38,16 @@ class Post extends Model
             'published_at' => 'datetime',
             'status' => PostStatus::class,
         ];
+    }
+
+    /**
+     * The user who owns this post.
+     *
+     * @return BelongsTo<User, Post>
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     /**

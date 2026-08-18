@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Enums\PostStatus;
 use App\Models\Post;
 use App\Models\ThreadsAccount;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -20,6 +21,7 @@ class PostFactory extends Factory
     public function definition(): array
     {
         return [
+            'user_id' => User::factory(),
             'threads_account_id' => ThreadsAccount::factory(),
             'threads_media_id' => null,
             'text' => fake()->realText(200),

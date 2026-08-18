@@ -19,9 +19,10 @@ class PostResourceTest extends TestCase
 
     public function test_create_post_with_valid_data(): void
     {
-        $account = ThreadsAccount::factory()->create();
+        $user = User::factory()->create();
+        $account = ThreadsAccount::factory()->create(['user_id' => $user->id]);
 
-        Livewire::actingAs(User::factory()->create())
+        Livewire::actingAs($user)
             ->test(CreatePost::class)
             ->fillForm([
                 'threads_account_id' => $account->id,
@@ -40,9 +41,10 @@ class PostResourceTest extends TestCase
 
     public function test_create_post_rejects_text_over_500_chars(): void
     {
-        $account = ThreadsAccount::factory()->create();
+        $user = User::factory()->create();
+        $account = ThreadsAccount::factory()->create(['user_id' => $user->id]);
 
-        Livewire::actingAs(User::factory()->create())
+        Livewire::actingAs($user)
             ->test(CreatePost::class)
             ->fillForm([
                 'threads_account_id' => $account->id,
@@ -55,9 +57,10 @@ class PostResourceTest extends TestCase
 
     public function test_create_post_with_past_scheduled_at(): void
     {
-        $account = ThreadsAccount::factory()->create();
+        $user = User::factory()->create();
+        $account = ThreadsAccount::factory()->create(['user_id' => $user->id]);
 
-        Livewire::actingAs(User::factory()->create())
+        Livewire::actingAs($user)
             ->test(CreatePost::class)
             ->fillForm([
                 'threads_account_id' => $account->id,
@@ -76,21 +79,25 @@ class PostResourceTest extends TestCase
 
     public function test_list_posts_shows_records(): void
     {
-        $account = ThreadsAccount::factory()->create();
+        $user = User::factory()->create();
+        $account = ThreadsAccount::factory()->create(['user_id' => $user->id]);
         $posts = Post::factory()->count(3)->create([
             'threads_account_id' => $account->id,
+            'user_id' => $user->id,
         ]);
 
-        Livewire::actingAs(User::factory()->create())
+        Livewire::actingAs($user)
             ->test(ListPosts::class)
             ->assertCanSeeTableRecords($posts);
     }
 
     public function test_published_post_cannot_be_edited(): void
     {
-        $account = ThreadsAccount::factory()->create();
+        $user = User::factory()->create();
+        $account = ThreadsAccount::factory()->create(['user_id' => $user->id]);
         $post = Post::factory()->published()->create([
             'threads_account_id' => $account->id,
+            'user_id' => $user->id,
         ]);
 
         $this->assertSame(PostStatus::Published, $post->status);
@@ -98,12 +105,14 @@ class PostResourceTest extends TestCase
 
     public function test_edit_post_loads_status_info_section(): void
     {
-        $account = ThreadsAccount::factory()->create();
+        $user = User::factory()->create();
+        $account = ThreadsAccount::factory()->create(['user_id' => $user->id]);
         $post = Post::factory()->create([
             'threads_account_id' => $account->id,
+            'user_id' => $user->id,
         ]);
 
-        Livewire::actingAs(User::factory()->create())
+        Livewire::actingAs($user)
             ->test(EditPost::class, ['record' => $post->id])
             ->assertOk()
             ->assertSee('貼文狀態資訊');
@@ -122,5 +131,22 @@ class PostResourceTest extends TestCase
         $this->assertSame('info', PostStatus::Publishing->getColor());
         $this->assertSame('success', PostStatus::Published->getColor());
         $this->assertSame('danger', PostStatus::Failed->getColor());
+    }
+
+    public function test_list_posts_shows_own_posts_only(): void
+    {
+        $userA = User::factory()->create();
+        $userB = User::factory()->create();
+
+        $accountA = ThreadsAccount::factory()->create(['user_id' => $userA->id]);
+        $accountB = ThreadsAccount::factory()->create(['user_id' => $userB->id]);
+
+        $postA = Post::factory()->create(['threads_account_id' => $accountA->id, 'user_id' => $userA->id]);
+        $postB = Post::factory()->create(['threads_account_id' => $accountB->id, 'user_id' => $userB->id]);
+
+        Livewire::actingAs($userA)
+            ->test(ListPosts::class)
+            ->assertCanSeeTableRecords([$postA])
+            ->assertCanNotSeeTableRecords([$postB]);
     }
 }

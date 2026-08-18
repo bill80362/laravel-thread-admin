@@ -22,6 +22,7 @@ class ListAccountsTool extends Tool
         $status = $request->get('status');
 
         $accounts = ThreadsAccount::query()
+            ->where('user_id', auth()->id())
             ->when($status, fn ($query) => $query->where('status', $status))
             ->orderBy('id')
             ->get()

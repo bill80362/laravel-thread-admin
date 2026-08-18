@@ -5,6 +5,7 @@ namespace App\Mcp\Tools;
 use App\Services\ReplyService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
+use Illuminate\Validation\Rule;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
@@ -20,8 +21,8 @@ class CreateReplyTool extends Tool
     public function handle(Request $request, ReplyService $replies): Response|ResponseFactory
     {
         $data = $request->validate([
-            'threads_account_id' => ['required', 'integer', 'exists:threads_accounts,id'],
-            'post_id' => ['required', 'integer', 'exists:posts,id'],
+            'threads_account_id' => ['required', 'integer', Rule::exists('threads_accounts', 'id')->where('user_id', auth()->id())],
+            'post_id' => ['required', 'integer', Rule::exists('posts', 'id')->where('user_id', auth()->id())],
             'text' => ['required', 'string', 'max:500'],
         ]);
 

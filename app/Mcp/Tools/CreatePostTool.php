@@ -5,6 +5,7 @@ namespace App\Mcp\Tools;
 use App\Services\PostService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
+use Illuminate\Validation\Rule;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
@@ -20,7 +21,7 @@ class CreatePostTool extends Tool
     public function handle(Request $request, PostService $posts): Response|ResponseFactory
     {
         $data = $request->validate([
-            'threads_account_id' => ['required', 'integer', 'exists:threads_accounts,id'],
+            'threads_account_id' => ['required', 'integer', Rule::exists('threads_accounts', 'id')->where('user_id', auth()->id())],
             'text' => ['required', 'string', 'max:500'],
             'scheduled_at' => ['required', 'date'],
         ]);

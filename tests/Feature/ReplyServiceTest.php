@@ -8,6 +8,7 @@ use App\Jobs\PublishReply;
 use App\Models\Post;
 use App\Models\Reply;
 use App\Models\ThreadsAccount;
+use App\Models\User;
 use App\Services\ReplyService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
@@ -22,8 +23,11 @@ class ReplyServiceTest extends TestCase
     {
         Queue::fake();
 
-        $account = ThreadsAccount::factory()->create();
-        $post = Post::factory()->published()->create(['threads_account_id' => $account->id]);
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $account = ThreadsAccount::factory()->create(['user_id' => $user->id]);
+        $post = Post::factory()->published()->create(['threads_account_id' => $account->id, 'user_id' => $user->id]);
 
         $reply = app(ReplyService::class)->createPostReply($account->id, $post->id, '貼文回覆內容');
 
@@ -42,8 +46,11 @@ class ReplyServiceTest extends TestCase
 
     public function test_create_post_reply_rejects_unpublished_post(): void
     {
-        $account = ThreadsAccount::factory()->create();
-        $post = Post::factory()->create(['threads_account_id' => $account->id, 'threads_media_id' => null]);
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $account = ThreadsAccount::factory()->create(['user_id' => $user->id]);
+        $post = Post::factory()->create(['threads_account_id' => $account->id, 'threads_media_id' => null, 'user_id' => $user->id]);
 
         $this->expectException(InvalidArgumentException::class);
 
@@ -54,8 +61,12 @@ class ReplyServiceTest extends TestCase
     {
         Queue::fake();
 
-        $account = ThreadsAccount::factory()->create();
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $account = ThreadsAccount::factory()->create(['user_id' => $user->id]);
         $reply = Reply::factory()->create([
+            'user_id' => $user->id,
             'threads_account_id' => $account->id,
             'threads_reply_id' => '12345',
             'status' => ReplyStatus::New,
@@ -70,8 +81,12 @@ class ReplyServiceTest extends TestCase
 
     public function test_publish_rejects_reply_without_threads_id(): void
     {
-        $account = ThreadsAccount::factory()->create();
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $account = ThreadsAccount::factory()->create(['user_id' => $user->id]);
         $reply = Reply::factory()->create([
+            'user_id' => $user->id,
             'threads_account_id' => $account->id,
             'threads_reply_id' => null,
         ]);
@@ -83,8 +98,12 @@ class ReplyServiceTest extends TestCase
 
     public function test_resolve_reply_to_id_returns_threads_reply_id_when_present(): void
     {
-        $account = ThreadsAccount::factory()->create();
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $account = ThreadsAccount::factory()->create(['user_id' => $user->id]);
         $reply = Reply::factory()->create([
+            'user_id' => $user->id,
             'threads_account_id' => $account->id,
             'threads_reply_id' => 'comment-id-123',
         ]);
@@ -94,9 +113,13 @@ class ReplyServiceTest extends TestCase
 
     public function test_resolve_reply_to_id_returns_post_media_id_when_reply_id_null(): void
     {
-        $account = ThreadsAccount::factory()->create();
-        $post = Post::factory()->published()->create(['threads_account_id' => $account->id]);
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $account = ThreadsAccount::factory()->create(['user_id' => $user->id]);
+        $post = Post::factory()->published()->create(['threads_account_id' => $account->id, 'user_id' => $user->id]);
         $reply = Reply::factory()->create([
+            'user_id' => $user->id,
             'threads_account_id' => $account->id,
             'post_id' => $post->id,
             'threads_reply_id' => null,
@@ -109,13 +132,52 @@ class ReplyServiceTest extends TestCase
     {
         Queue::fake();
 
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
         $service = app(ReplyService::class);
-        $account = ThreadsAccount::factory()->create();
-        $post = Post::factory()->published()->create(['threads_account_id' => $account->id]);
+        $account = ThreadsAccount::factory()->create(['user_id' => $user->id]);
+        $post = Post::factory()->published()->create(['threads_account_id' => $account->id, 'user_id' => $user->id]);
 
         $service->createPostReply($account->id, $post->id, 'one');
         $service->createPostReply($account->id, $post->id, 'two');
 
         $this->assertCount(2, $service->list(['status' => ReplyStatus::New->value]));
+    }
+
+    public function test_create_post_reply_rejects_foreign_account(): void
+    {
+        Queue::fake();
+
+        $userA = User::factory()->create();
+        $userB = User::factory()->create();
+
+        $this->actingAs($userA);
+
+        $foreignAccount = ThreadsAccount::factory()->create(['user_id' => $userB->id]);
+        $post = Post::factory()->published()->create(['threads_account_id' => $foreignAccount->id, 'user_id' => $userA->id]);
+
+        $this->expectException(InvalidArgumentException::class);
+
+        app(ReplyService::class)->createPostReply($foreignAccount->id, $post->id, '內容');
+    }
+
+    public function test_list_only_returns_own_replies(): void
+    {
+        $userA = User::factory()->create();
+        $userB = User::factory()->create();
+
+        $this->actingAs($userA);
+
+        $accountA = ThreadsAccount::factory()->create(['user_id' => $userA->id]);
+        $postA = Post::factory()->published()->create(['threads_account_id' => $accountA->id, 'user_id' => $userA->id]);
+
+        $replyOwn = Reply::factory()->create(['threads_account_id' => $accountA->id, 'post_id' => $postA->id, 'user_id' => $userA->id]);
+        Reply::factory()->create(['user_id' => $userB->id]);
+
+        $result = app(ReplyService::class)->list();
+
+        $this->assertCount(1, $result);
+        $this->assertSame($replyOwn->id, $result->first()->id);
     }
 }

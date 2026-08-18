@@ -24,10 +24,11 @@ class ReplyResourceTest extends TestCase
     {
         Queue::fake();
 
-        $account = ThreadsAccount::factory()->create();
-        $post = Post::factory()->published()->create(['threads_account_id' => $account->id]);
+        $user = User::factory()->create();
+        $account = ThreadsAccount::factory()->create(['user_id' => $user->id]);
+        $post = Post::factory()->published()->create(['threads_account_id' => $account->id, 'user_id' => $user->id]);
 
-        Livewire::actingAs(User::factory()->create())
+        Livewire::actingAs($user)
             ->test(CreateReply::class)
             ->fillForm([
                 'threads_account_id' => $account->id,
@@ -48,7 +49,9 @@ class ReplyResourceTest extends TestCase
 
     public function test_create_reply_rejects_missing_required_fields(): void
     {
-        Livewire::actingAs(User::factory()->create())
+        $user = User::factory()->create();
+
+        Livewire::actingAs($user)
             ->test(CreateReply::class)
             ->fillForm([
                 'threads_account_id' => null,
@@ -65,12 +68,14 @@ class ReplyResourceTest extends TestCase
 
     public function test_list_replies_shows_records(): void
     {
-        $account = ThreadsAccount::factory()->create();
+        $user = User::factory()->create();
+        $account = ThreadsAccount::factory()->create(['user_id' => $user->id]);
         $replies = Reply::factory()->count(3)->create([
+            'user_id' => $user->id,
             'threads_account_id' => $account->id,
         ]);
 
-        Livewire::actingAs(User::factory()->create())
+        Livewire::actingAs($user)
             ->test(ListReplies::class)
             ->assertCanSeeTableRecords($replies);
     }
@@ -79,14 +84,16 @@ class ReplyResourceTest extends TestCase
     {
         Queue::fake();
 
-        $account = ThreadsAccount::factory()->create();
+        $user = User::factory()->create();
+        $account = ThreadsAccount::factory()->create(['user_id' => $user->id]);
         $reply = Reply::factory()->create([
+            'user_id' => $user->id,
             'threads_account_id' => $account->id,
             'threads_reply_id' => '12345',
             'status' => ReplyStatus::New,
         ]);
 
-        Livewire::actingAs(User::factory()->create())
+        Livewire::actingAs($user)
             ->test(ListReplies::class)
             ->callTableAction('reply', $reply, ['text' => '回應內容'])
             ->assertNotified();

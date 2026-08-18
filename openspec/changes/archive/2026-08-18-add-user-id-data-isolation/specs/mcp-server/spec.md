@@ -1,21 +1,4 @@
-# mcp-server Specification
-
-## Purpose
-提供 MCP 伺服器讓外部 AI agent 以程式化方式讀取帳號、建立排程貼文、查詢貼文與回覆、建立手動回覆記錄，補齊目前僅能透過後台介面操作的缺口。
-
-## Requirements
-
-### Requirement: MCP 伺服器以本地與 HTTP 兩種方式提供
-系統 SHALL 提供一個 MCP 伺服器，並同時以本地（Artisan command）與 HTTP 兩種方式註冊，讓 AI agent 得以連線使用。
-
-#### Scenario: 本地方式啟動伺服器
-- **WHEN** AI agent 以本地方式啟動 MCP 伺服器
-- **THEN** 系統 SHALL 以 Artisan command 形式提供伺服器，無需 HTTP 伺服器
-
-#### Scenario: HTTP 方式存取伺服器
-- **WHEN** AI agent 透過 HTTP POST 連線到 MCP 端點
-- **THEN** 系統 SHALL 提供可供遠端存取的 MCP 端點
-- **AND** 端點 SHALL 受到 Passport OAuth（`auth:api`）保護
+## MODIFIED Requirements
 
 ### Requirement: 列出可用帳號
 系統 SHALL 提供 `list-accounts` 工具，回傳 OAuth token 所屬使用者下可供發文與回覆的已綁定 Threads 帳號清單。
@@ -77,40 +60,6 @@
 #### Scenario: 依帳號、貼文與狀態篩選
 - **WHEN** AI agent 呼叫 `list-replies` 並指定帳號、貼文或狀態
 - **THEN** 系統 SHALL 僅回傳 OAuth token 所屬使用者中符合條件的回覆
-
-### Requirement: 業務邏輯與介面整合
-系統 SHALL 將貼文與回覆的建立／查詢邏輯收斂到共用 Service 層，確保 MCP 工具與後台介面遵循相同業務規則。
-
-#### Scenario: 共用業務邏輯
-- **WHEN** MCP 工具或後台介面執行建立貼文、建立回覆、查詢貼文、查詢回覆
-- **THEN** 兩者 SHALL 呼叫相同的 Service 方法，遵循相同的驗證與資料寫入規則
-
-### Requirement: 帳號綁定不納入 MCP 範圍
-系統 SHALL 不在 MCP 中提供帳號綁定（OAuth 授權）相關操作；綁定僅能於後台介面完成。
-
-#### Scenario: MCP 不包含綁定操作
-- **WHEN** AI agent 查詢 MCP 伺服器提供的工具清單
-- **THEN** 工具清單 SHALL 不包含任何帳號綁定或 OAuth 授權相關工具
-
-### Requirement: OAuth 授權流程未登入時重導向至後台登入頁
-系統 SHALL 在使用者未登入而存取 HTTP 模式 MCP 的 OAuth 授權端點（`/oauth/authorize`）時，將使用者重導向至後台登入頁，而非回傳伺服器錯誤。
-
-#### Scenario: 未登入存取 OAuth 授權端點
-- **WHEN** 使用者尚未登入，且存取 OAuth 授權端點以開始授權流程
-- **THEN** 系統 SHALL 將使用者重導向至後台登入頁
-- **AND** 系統 SHALL 不回傳 `Route [login] not defined` 或其他伺服器錯誤
-
-#### Scenario: 已登入存取 OAuth 授權端點
-- **WHEN** 使用者已登入，且存取 OAuth 授權端點
-- **THEN** 系統 SHALL 正常顯示授權確認頁，不進行登入重導向
-
-### Requirement: MCP 端點認證失敗時回傳 JSON 錯誤
-系統 SHALL 在 HTTP 模式 MCP 端點（`/mcp/*`）的 `auth:api` 認證失敗時，回傳 JSON 格式的 401 錯誤回應，而非 HTML 重導向。
-
-#### Scenario: 未提供有效 token 呼叫 MCP 端點
-- **WHEN** AI agent 未提供有效 Bearer token 而呼叫 MCP 端點
-- **THEN** 系統 SHALL 回傳 JSON 格式的 401 Unauthenticated 回應
-- **AND** 系統 SHALL 不回傳 HTML 重導向頁面
 
 ### Requirement: 建立貼文回覆
 系統 SHALL 提供 `create-reply` 工具，依指定帳號、目標貼文與回覆內容建立一筆貼文回覆並發佈，並驗證指定帳號歸屬於 OAuth token 所屬使用者。

@@ -6,6 +6,7 @@ use App\Enums\ReplySource;
 use App\Enums\ReplyStatus;
 use App\Models\Reply;
 use App\Models\ThreadsAccount;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -21,6 +22,7 @@ class ReplyFactory extends Factory
     public function definition(): array
     {
         return [
+            'user_id' => User::factory(),
             'threads_account_id' => ThreadsAccount::factory(),
             'post_id' => null,
             'threads_reply_id' => fake()->unique()->numerify('##########'),

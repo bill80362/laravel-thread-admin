@@ -15,6 +15,7 @@ class Reply extends Model
     use HasFactory;
 
     protected $fillable = [
+        'user_id',
         'threads_account_id',
         'post_id',
         'threads_reply_id',
@@ -40,6 +41,16 @@ class Reply extends Model
             'replied_at' => 'datetime',
             'publish_attempts' => 'integer',
         ];
+    }
+
+    /**
+     * The user who owns this reply.
+     *
+     * @return BelongsTo<User, Reply>
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     /**

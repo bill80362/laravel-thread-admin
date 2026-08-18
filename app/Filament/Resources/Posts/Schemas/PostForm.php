@@ -36,7 +36,7 @@ class PostForm
 
                 Select::make('threads_account_id')
                     ->label('目標帳號')
-                    ->relationship('threadsAccount', 'username')
+                    ->relationship('threadsAccount', 'username', fn ($query) => $query->where('user_id', auth()->id()))
                     ->getOptionLabelFromRecordUsing(fn ($record) => "@{$record->username}")
                     ->required()
                     ->helperText(fn ($get) => self::getAccountWarning($get('threads_account_id'))),

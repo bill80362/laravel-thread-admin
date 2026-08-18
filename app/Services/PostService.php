@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Enums\PostStatus;
 use App\Models\Post;
+use App\Models\ThreadsAccount;
 use Illuminate\Database\Eloquent\Collection;
+use InvalidArgumentException;
 
 class PostService
 {
@@ -15,7 +17,18 @@ class PostService
      */
     public function create(array $data): Post
     {
+        $userId = auth()->id();
+
+        $account = ThreadsAccount::query()
+            ->where('user_id', $userId)
+            ->find($data['threads_account_id']);
+
+        if ($account === null) {
+            throw new InvalidArgumentException('帳號不存在或無權存取');
+        }
+
         $post = new Post;
+        $post->user_id = $userId;
         $post->threads_account_id = $data['threads_account_id'];
         $post->text = $data['text'];
         $post->scheduled_at = $data['scheduled_at'];
@@ -31,9 +44,11 @@ class PostService
      * @param  array{threads_account_id?: int, status?: string}  $filters
      * @return Collection<int, Post>
      */
-    public function list(array $filters = []): Collection
+    public function list(array $filters = [], ?int $userId = null): Collection
     {
-        $query = Post::query()->with('threadsAccount');
+        $userId ??= auth()->id();
+
+        $query = Post::query()->with('threadsAccount')->where('user_id', $userId);
 
         if (! empty($filters['threads_account_id'])) {
             $query->where('threads_account_id', $filters['threads_account_id']);
@@ -49,8 +64,10 @@ class PostService
     /**
      * 查詢單一貼文。
      */
-    public function find(int $id): ?Post
+    public function find(int $id, ?int $userId = null): ?Post
     {
-        return Post::query()->with('threadsAccount')->find($id);
+        $userId ??= auth()->id();
+
+        return Post::query()->with('threadsAccount')->where('user_id', $userId)->find($id);
     }
 }

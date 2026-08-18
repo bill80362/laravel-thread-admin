@@ -10,6 +10,7 @@ class OAuthState extends Model
     protected $table = 'threads_oauth_states';
 
     protected $fillable = [
+        'user_id',
         'token_hash',
         'threads_app_id',
         'threads_account_id',
@@ -26,6 +27,16 @@ class OAuthState extends Model
         return [
             'expires_at' => 'datetime',
         ];
+    }
+
+    /**
+     * The user who initiated this OAuth flow.
+     *
+     * @return BelongsTo<User, OAuthState>
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     /**
@@ -59,6 +70,7 @@ class OAuthState extends Model
             'token_hash' => hash('sha256', $token),
             'threads_app_id' => $app->id,
             'threads_account_id' => $account?->id,
+            'user_id' => auth()->id(),
             'expires_at' => now()->addMinutes(10),
         ]);
 
@@ -74,6 +86,7 @@ class OAuthState extends Model
     {
         $state = self::query()
             ->where('token_hash', hash('sha256', $token))
+            ->where('user_id', auth()->id())
             ->first();
 
         if ($state === null || $state->expires_at->isPast()) {
