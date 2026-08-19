@@ -4,13 +4,13 @@ namespace Tests\Unit;
 
 use App\Exceptions\ThreadsApiException;
 use App\Models\ThreadsAccount;
-use App\Models\ThreadsApp;
 use App\Services\ThreadsClient;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Config;
 use Mockery;
 use Mockery\MockInterface;
 use Tests\TestCase;
@@ -27,35 +27,28 @@ class ThreadsClientTest extends TestCase
     {
         parent::setUp();
 
+        Config::set('services.threads.client_id', 'test-client-id');
+        Config::set('services.threads.client_secret', 'test-client-secret');
+
         $this->http = Mockery::mock(ClientInterface::class);
         $this->client = new ThreadsClient($this->http);
     }
 
     public function test_exchange_code_for_short_token_returns_token(): void
     {
-        $app = ThreadsApp::factory()->create([
-            'client_id' => 'test-client-id',
-            'client_secret' => 'test-client-secret',
-        ]);
-
         $this->http->shouldReceive('request')
             ->once()
             ->andReturn(new Response(200, [], json_encode([
                 'access_token' => 'short-token',
             ])));
 
-        $token = $this->client->exchangeCodeForShortToken($app, 'code');
+        $token = $this->client->exchangeCodeForShortToken('code');
 
         $this->assertSame('short-token', $token);
     }
 
     public function test_exchange_short_for_long_token_returns_token_and_expiry(): void
     {
-        $app = ThreadsApp::factory()->create([
-            'client_id' => 'test-client-id',
-            'client_secret' => 'test-client-secret',
-        ]);
-
         $this->http->shouldReceive('request')
             ->once()
             ->andReturn(new Response(200, [], json_encode([
@@ -63,7 +56,7 @@ class ThreadsClientTest extends TestCase
                 'expires_in' => 5184000,
             ])));
 
-        $result = $this->client->exchangeShortForLongToken($app, 'short-token');
+        $result = $this->client->exchangeShortForLongToken('short-token');
 
         $this->assertSame('long-token', $result['access_token']);
         $this->assertSame(5184000, $result['expires_in']);
@@ -197,6 +190,20 @@ class ThreadsClientTest extends TestCase
 
         $this->assertCount(1, $replies);
         $this->assertSame('reply-1', $replies[0]['id']);
+    }
+
+    public function test_delete_media_returns_true(): void
+    {
+        $account = ThreadsAccount::factory()->create();
+
+        $this->http->shouldReceive('request')
+            ->once()
+            ->with('DELETE', 'https://graph.threads.net/v1.0/media-id', Mockery::any())
+            ->andReturn(new Response(200, [], json_encode(['success' => true])));
+
+        $result = $this->client->deleteMedia($account, 'media-id');
+
+        $this->assertTrue($result);
     }
 
     protected function tearDown(): void

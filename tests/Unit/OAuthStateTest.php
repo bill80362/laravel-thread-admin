@@ -4,7 +4,7 @@ namespace Tests\Unit;
 
 use App\Models\OAuthState;
 use App\Models\ThreadsAccount;
-use App\Models\ThreadsApp;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -12,11 +12,18 @@ class OAuthStateTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_create_for_app_stores_hash_and_returns_raw_token(): void
-    {
-        $app = ThreadsApp::factory()->create();
+    private User $user;
 
-        $token = OAuthState::createForApp($app);
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->user = User::factory()->create();
+        $this->actingAs($this->user);
+    }
+
+    public function test_create_for_user_stores_hash_and_returns_raw_token(): void
+    {
+        $token = OAuthState::createForUser();
 
         $this->assertIsString($token);
         $this->assertNotSame('', $token);
@@ -24,19 +31,18 @@ class OAuthStateTest extends TestCase
 
         $this->assertDatabaseHas('threads_oauth_states', [
             'token_hash' => hash('sha256', $token),
-            'threads_app_id' => $app->id,
+            'user_id' => $this->user->id,
         ]);
     }
 
-    public function test_resolve_returns_app_and_consumes_state(): void
+    public function test_resolve_returns_user_id_and_consumes_state(): void
     {
-        $app = ThreadsApp::factory()->create();
-        $token = OAuthState::createForApp($app);
+        $token = OAuthState::createForUser();
 
         $resolved = OAuthState::resolve($token);
 
         $this->assertNotNull($resolved);
-        $this->assertSame($app->id, $resolved['app']->id);
+        $this->assertSame($this->user->id, $resolved['user_id']);
         $this->assertNull($resolved['account']);
 
         // 單次使用：解析後即刪除。
@@ -45,9 +51,8 @@ class OAuthStateTest extends TestCase
 
     public function test_resolve_with_target_account_returns_account(): void
     {
-        $app = ThreadsApp::factory()->create();
-        $account = ThreadsAccount::factory()->create(['threads_app_id' => $app->id]);
-        $token = OAuthState::createForApp($app, $account);
+        $account = ThreadsAccount::factory()->create(['user_id' => $this->user->id]);
+        $token = OAuthState::createForUser($account);
 
         $resolved = OAuthState::resolve($token);
 
@@ -62,8 +67,7 @@ class OAuthStateTest extends TestCase
 
     public function test_resolve_expired_token_returns_null(): void
     {
-        $app = ThreadsApp::factory()->create();
-        $token = OAuthState::createForApp($app);
+        $token = OAuthState::createForUser();
 
         // 手動將過期時間改成過去。
         OAuthState::query()->update(['expires_at' => now()->subMinute()]);
