@@ -85,6 +85,47 @@
                     <p class="text-xs text-red-600 dark:text-red-400 mt-1">發佈失敗，系統會自動重試（最多 3 次，間隔 60 / 120 / 180 秒）</p>
                 </div>
             </div>
+
+            {{-- 刪除貼文狀態 --}}
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-5">已發佈的貼文可進行刪除，刪除流程如下：</p>
+            <div class="mt-3 flex flex-wrap items-center gap-2 text-sm">
+                <span class="inline-flex items-center gap-1.5 rounded-lg bg-green-100 dark:bg-green-900/40 px-3 py-2">
+                    <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                    <span class="font-medium text-green-700 dark:text-green-300">已發佈</span>
+                </span>
+                <span class="text-gray-400 dark:text-gray-500">→</span>
+                <span class="inline-flex items-center gap-1.5 rounded-lg bg-amber-100 dark:bg-amber-900/40 px-3 py-2">
+                    <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                    <span class="font-medium text-amber-700 dark:text-amber-300">刪除中</span>
+                </span>
+                <span class="text-gray-400 dark:text-gray-500">→</span>
+                <span class="text-xs text-gray-500 dark:text-gray-400">成功 → 記錄移除</span>
+            </div>
+            <div class="mt-2 flex flex-wrap items-center gap-2 text-sm">
+                <span class="text-gray-400 dark:text-gray-500 ml-[88px]">↳ 失敗</span>
+                <span class="text-gray-400 dark:text-gray-500">→</span>
+                <span class="inline-flex items-center gap-1.5 rounded-lg bg-red-100 dark:bg-red-900/40 px-3 py-2">
+                    <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                    <span class="font-medium text-red-700 dark:text-red-300">刪除失敗</span>
+                </span>
+                <span class="text-xs text-gray-500 dark:text-gray-400">（可再次觸發刪除）</span>
+            </div>
+            <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/10 p-3">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                        <span class="font-medium text-amber-800 dark:text-amber-300 text-sm">刪除中</span>
+                    </div>
+                    <p class="text-xs text-amber-600 dark:text-amber-400 mt-1">系統正在刪除 Threads 上的貼文</p>
+                </div>
+                <div class="rounded-lg border border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-900/10 p-3">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                        <span class="font-medium text-red-800 dark:text-red-300 text-sm">刪除失敗</span>
+                    </div>
+                    <p class="text-xs text-red-600 dark:text-red-400 mt-1">Threads 端刪除失敗，保留本地記錄，可再次觸發刪除</p>
+                </div>
+            </div>
         </div>
     </div>
 

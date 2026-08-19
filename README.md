@@ -63,30 +63,22 @@ php artisan make:filament-user
 
 > **注意**：測試階段使用 Threads Tester 即可。正式上線需通過 **App Review** 取得 Advanced Access。
 
-## 多 App 管理
+## 環境變數設定
 
-本平台支援一個登入人員管理**多個 Meta App**，每個 App 底下各自綁定多個 Threads 帳號。
+在 `.env` 中設定 Threads API 憑證：
 
-```
-登入人員
-  └─ Threads App A（Meta App 1）
-  │    ├─ Threads 帳號 @account_1
-  │    └─ Threads 帳號 @account_2
-  └─ Threads App B（Meta App 2）
-       └─ Threads 帳號 @account_3
+```env
+THREADS_CLIENT_ID=你的Threads_App_ID
+THREADS_CLIENT_SECRET=你的Threads_App_Secret
 ```
 
-### 新增 Threads App
-
-進入 **Threads App** 頁面 → 點擊「新增」→ 填入 App 名稱、Client ID、Client Secret → 儲存。
-
-> `client_id` 與 `client_secret` 儲存在資料庫中（`client_secret` 以加密形式儲存），不再寫在 `.env`。
+> `client_id` 與 `client_secret` 來自 Meta App 的 Threads use case 設定頁面。`client_secret` 不會直接出現在程式碼或資料庫中，僅透過 `.env` 管理。
 
 ### 綁定 Threads 帳號
 
-進入 **Threads App** 頁面 → 在目標 App 點擊「綁定 Threads 帳號」→ 在 Threads 授權頁同意 → 自動導回後台。
+進入 **Threads 帳號** 頁面 → 點擊「綁定 Threads 帳號」→ 在 Threads 授權頁同意 → 自動導回後台。
 
-綁定成功後，帳號會出現在 **Threads 帳號** 頁面，並標示所屬 App。
+綁定成功後，帳號會出現在 **Threads 帳號** 頁面。
 
 ### 重新授權
 
@@ -95,19 +87,19 @@ php artisan make:filament-user
 ## OAuth 綁定流程
 
 ```
-管理員在 Threads App 點擊「綁定帳號」
+管理員在 Threads 帳號頁面點擊「綁定帳號」
        │
        ▼
-系統產生 OAuth state（存 DB，含 App 身分與過期時間）
+系統產生 OAuth state（存 DB，含 user_id 與過期時間）
        │
        ▼
-跳轉 Threads 授權頁面（使用該 App 的 client_id）
+跳轉 Threads 授權頁面（使用 .env 中的 client_id）
        │
        ▼
 使用者同意授權 → 回調取得授權碼 + state
        │
        ▼
-系統解析 state → 取得發起的 App → 用 App 憑證交換 token
+系統解析 state → 取得 user_id → 用 .env 憑證交換 token
        │
        ▼
 短效 token (1hr) → 長效 token (60天) → 存入 threads_accounts
@@ -135,17 +127,13 @@ php artisan queue:work --tries=3
 
 ## 操作說明
 
-### 1. 管理 Threads App
+### 1. 設定環境變數
 
-進入 **Threads App** 頁面 → 點擊「新增」→ 填入 App 名稱、Client ID、Client Secret → 儲存。
-
-每個登入人員只能看到自己建立的 App。
+在 `.env` 中設定 `THREADS_CLIENT_ID` 與 `THREADS_CLIENT_SECRET`（來自 Meta App 的 Threads use case 設定頁面）。
 
 ### 2. 綁定 Threads 帳號
 
-進入 **Threads App** 頁面 → 在目標 App 點擊「綁定 Threads 帳號」→ 在 Threads 授權頁同意 → 自動導回後台。
-
-綁定成功後，帳號會出現在 **Threads 帳號** 頁面，並標示所屬 App。可依 App 篩選帳號列表。
+進入 **Threads 帳號** 頁面 → 點擊「綁定 Threads 帳號」→ 在 Threads 授權頁同意 → 自動導回後台。
 
 ### 3. 重新授權
 
