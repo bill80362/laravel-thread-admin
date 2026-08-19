@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Enums\ThreadsAccountStatus;
 use App\Models\OAuthState;
 use App\Models\ThreadsAccount;
-use App\Models\ThreadsApp;
 use App\Services\ThreadsClient;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,25 +18,20 @@ class ThreadsOAuthController extends Controller
     /**
      * Redirect the user to the Threads authorization window.
      */
-    public function redirect(Request $request, ThreadsApp $app): RedirectResponse
+    public function redirect(Request $request): RedirectResponse
     {
-        // 驗證 App 歸屬於目前登入人員（或為遷移產生的無主 App）。
-        if ($app->user_id !== null && $app->user_id !== auth()->id()) {
-            abort(403);
-        }
-
         $targetAccount = null;
 
         if ($accountId = $request->query('account')) {
             $targetAccount = ThreadsAccount::query()
                 ->where('id', $accountId)
-                ->where('threads_app_id', $app->id)
+                ->where('user_id', auth()->id())
                 ->first();
         }
 
-        $state = OAuthState::createForApp($app, $targetAccount);
+        $state = OAuthState::createForUser($targetAccount);
 
-        return redirect()->away($this->threads->buildAuthorizationUrl($app, $state));
+        return redirect()->away($this->threads->buildAuthorizationUrl($state));
     }
 
     /**
@@ -61,7 +55,7 @@ class ThreadsOAuthController extends Controller
             return $this->fail('OAuth state 無效或已過期，請重新授權');
         }
 
-        $app = $resolved['app'];
+        $userId = $resolved['user_id'];
         $targetAccount = $resolved['account'];
 
         $code = $request->query('code');
@@ -71,13 +65,12 @@ class ThreadsOAuthController extends Controller
         }
 
         try {
-            $shortToken = $this->threads->exchangeCodeForShortToken($app, $code);
-            $longToken = $this->threads->exchangeShortForLongToken($app, $shortToken);
+            $shortToken = $this->threads->exchangeCodeForShortToken($code);
+            $longToken = $this->threads->exchangeShortForLongToken($shortToken);
             $profile = $this->threads->getProfile($longToken['access_token']);
 
             $attributes = [
-                'threads_app_id' => $app->id,
-                'user_id' => auth()->id(),
+                'user_id' => $userId,
                 'username' => $profile['username'] ?? $profile['id'],
                 'name' => $profile['name'] ?? null,
                 'avatar' => null,
@@ -93,7 +86,10 @@ class ThreadsOAuthController extends Controller
                 $message = "已重新授權帳號 @{$account->username}";
             } else {
                 $account = ThreadsAccount::query()->updateOrCreate(
-                    ['threads_user_id' => $profile['id']],
+                    [
+                        'threads_user_id' => $profile['id'],
+                        'user_id' => $userId,
+                    ],
                     $attributes,
                 );
                 $message = "已成功綁定帳號 @{$account->username}";
