@@ -16,7 +16,6 @@ class ThreadsAccount extends Model
 
     protected $fillable = [
         'user_id',
-        'threads_app_id',
         'threads_user_id',
         'username',
         'name',
@@ -50,16 +49,6 @@ class ThreadsAccount extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
-    }
-
-    /**
-     * The Threads app this account belongs to.
-     *
-     * @return BelongsTo<ThreadsApp, ThreadsAccount>
-     */
-    public function threadsApp(): BelongsTo
-    {
-        return $this->belongsTo(ThreadsApp::class);
     }
 
     /**

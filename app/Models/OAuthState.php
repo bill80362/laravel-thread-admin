@@ -12,7 +12,6 @@ class OAuthState extends Model
     protected $fillable = [
         'user_id',
         'token_hash',
-        'threads_app_id',
         'threads_account_id',
         'expires_at',
     ];
@@ -40,16 +39,6 @@ class OAuthState extends Model
     }
 
     /**
-     * The app that initiated this OAuth flow.
-     *
-     * @return BelongsTo<ThreadsApp, OAuthState>
-     */
-    public function threadsApp(): BelongsTo
-    {
-        return $this->belongsTo(ThreadsApp::class);
-    }
-
-    /**
      * The account being re-authorized, if any.
      *
      * @return BelongsTo<ThreadsAccount, OAuthState>
@@ -62,13 +51,12 @@ class OAuthState extends Model
     /**
      * Create a state record for an OAuth flow and return the raw token.
      */
-    public static function createForApp(ThreadsApp $app, ?ThreadsAccount $account = null): string
+    public static function createForUser(?ThreadsAccount $account = null): string
     {
         $token = bin2hex(random_bytes(32));
 
         self::query()->create([
             'token_hash' => hash('sha256', $token),
-            'threads_app_id' => $app->id,
             'threads_account_id' => $account?->id,
             'user_id' => auth()->id(),
             'expires_at' => now()->addMinutes(10),
@@ -78,15 +66,14 @@ class OAuthState extends Model
     }
 
     /**
-     * Resolve a raw token to its app and optional target account.
+     * Resolve a raw token to its user and optional target account.
      *
-     * @return array{app: ThreadsApp, account: ?ThreadsAccount}|null
+     * @return array{user_id: int, account: ?ThreadsAccount}|null
      */
     public static function resolve(string $token): ?array
     {
         $state = self::query()
             ->where('token_hash', hash('sha256', $token))
-            ->where('user_id', auth()->id())
             ->first();
 
         if ($state === null || $state->expires_at->isPast()) {
@@ -97,7 +84,7 @@ class OAuthState extends Model
         $state->delete();
 
         return [
-            'app' => $state->threadsApp,
+            'user_id' => $state->user_id,
             'account' => $state->threadsAccount,
         ];
     }
