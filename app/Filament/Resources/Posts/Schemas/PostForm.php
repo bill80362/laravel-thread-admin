@@ -2,10 +2,12 @@
 
 namespace App\Filament\Resources\Posts\Schemas;
 
+use App\Enums\PostStatus;
 use App\Enums\ThreadsAccountStatus;
 use App\Models\ThreadsAccount;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Infolists\Components\TextEntry;
@@ -35,20 +37,24 @@ class PostForm
                     ->columns(3)
                     ->hiddenOn(Operation::Create),
 
+                Hidden::make('status'),
+
                 Select::make('threads_account_id')
                     ->label('目標帳號')
                     ->relationship('threadsAccount', 'username', fn ($query) => $query->where('user_id', auth()->id()))
                     ->getOptionLabelFromRecordUsing(fn ($record) => "@{$record->username}")
                     ->required()
+                    ->disabled(fn ($get, string $operation): bool => $operation === 'edit' && ! in_array($get('status'), [PostStatus::Draft->value, PostStatus::Scheduled->value]))
                     ->helperText(fn ($get) => self::getAccountWarning($get('threads_account_id'))),
 
-                FileUpload::make('image')
+                FileUpload::make('image_path')
                     ->label('圖片')
                     ->image()
                     ->disk('public')
                     ->directory('posts')
                     ->acceptedFileTypes(['image/jpeg', 'image/png'])
                     ->maxSize(8192)
+                    ->disabled(fn ($get, string $operation): bool => $operation === 'edit' && ! in_array($get('status'), [PostStatus::Draft->value, PostStatus::Scheduled->value]))
                     ->helperText('支援 JPEG、PNG，最大 8MB。文字與圖片至少需填寫一項。'),
 
                 Textarea::make('text')
@@ -56,13 +62,15 @@ class PostForm
                     ->nullable()
                     ->maxLength(500)
                     ->rows(4)
+                    ->disabled(fn ($get, string $operation): bool => $operation === 'edit' && ! in_array($get('status'), [PostStatus::Draft->value, PostStatus::Scheduled->value]))
                     ->helperText('最多 500 字元。文字與圖片至少需填寫一項。'),
 
                 DateTimePicker::make('scheduled_at')
                     ->label('排程時間')
                     ->required()
                     ->default(now())
-                    ->native(false),
+                    ->native(false)
+                    ->disabled(fn ($get, string $operation): bool => $operation === 'edit' && ! in_array($get('status'), [PostStatus::Draft->value, PostStatus::Scheduled->value])),
             ]);
     }
 

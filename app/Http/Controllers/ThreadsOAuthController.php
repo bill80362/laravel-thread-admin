@@ -96,7 +96,7 @@ class ThreadsOAuthController extends Controller
             }
 
             return redirect()
-                ->to(URL::route('filament.admin.resources.threads-accounts.index'))
+                ->to(URL::route('filament.user.resources.threads-accounts.index'))
                 ->with('success', $message);
         } catch (\Throwable $e) {
             Log::error('Threads OAuth 綁定失敗', ['exception' => $e]);
@@ -108,7 +108,7 @@ class ThreadsOAuthController extends Controller
     private function fail(string $message): RedirectResponse
     {
         return redirect()
-            ->to(URL::route('filament.admin.resources.threads-accounts.index'))
+            ->to(URL::route('filament.user.resources.threads-accounts.index'))
             ->with('error', $message);
     }
 }

@@ -65,7 +65,11 @@ class PublishScheduledPost implements ShouldQueue
         try {
             if ($this->creationId === null) {
                 if ($post->image_path !== null) {
-                    $imageUrl = Storage::disk('public')->url($post->image_path);
+                    // Filament 上傳：相對路徑，需轉換為完整 URL
+                    // MCP image_url：已是完整 URL，直接使用
+                    $imageUrl = str_starts_with($post->image_path, 'http')
+                        ? $post->image_path
+                        : Storage::disk('public')->url($post->image_path);
                     $creationId = $threads->createImageContainer($account, $imageUrl, $post->text);
                 } else {
                     $creationId = $threads->createTextContainer($account, $post->text);

@@ -14,7 +14,7 @@ class PostService
     /**
      * 建立一筆排程貼文。
      *
-     * @param  array{threads_account_id: int, text?: string, image?: string, image_url?: string, scheduled_at: string}  $data
+     * @param  array{threads_account_id: int, text?: string, image_path?: string, image_url?: string, scheduled_at: string}  $data
      */
     public function create(array $data): Post
     {
@@ -29,7 +29,7 @@ class PostService
         }
 
         // 驗證至少要有 text 或 image
-        if (empty($data['text']) && empty($data['image']) && empty($data['image_url'])) {
+        if (empty($data['text']) && empty($data['image_path']) && empty($data['image_url'])) {
             throw new InvalidArgumentException('貼文內容或圖片至少需填寫一項');
         }
 
@@ -41,8 +41,8 @@ class PostService
         $post->status = PostStatus::Scheduled;
 
         // 處理圖片（來自 Filament 上傳或 MCP image_url）
-        if (! empty($data['image'])) {
-            $post->image_path = $data['image'];
+        if (! empty($data['image_path'])) {
+            $post->image_path = $data['image_path'];
         } elseif (! empty($data['image_url'])) {
             $post->image_path = $data['image_url'];
         }

@@ -6,7 +6,6 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Filament\Support\Enums\Operation;
 use Illuminate\Support\Facades\Hash;
 
 class UserForm
@@ -30,22 +29,13 @@ class UserForm
                             ->maxLength(255),
 
                         TextInput::make('new_password')
-                            ->label('密碼')
+                            ->label(fn (string $operation): string => $operation === 'create' ? '密碼' : '新密碼（留空不修改）')
                             ->password()
-                            ->required()
+                            ->required(fn (string $operation): bool => $operation === 'create')
+                            ->nullable(fn (string $operation): bool => $operation !== 'create')
                             ->minLength(8)
                             ->dehydrateStateUsing(fn (?string $state): ?string => $state ? Hash::make($state) : null)
-                            ->dehydrated(fn (?string $state): bool => filled($state))
-                            ->visible(fn (Operation $operation): bool => $operation === Operation::Create),
-
-                        TextInput::make('new_password')
-                            ->label('新密碼（留空不修改）')
-                            ->password()
-                            ->nullable()
-                            ->minLength(8)
-                            ->dehydrateStateUsing(fn (?string $state): ?string => $state ? Hash::make($state) : null)
-                            ->dehydrated(fn (?string $state): bool => filled($state))
-                            ->visible(fn (Operation $operation): bool => $operation === Operation::Edit),
+                            ->dehydrated(fn (?string $state): bool => filled($state)),
                     ])
                     ->columns(2),
 
