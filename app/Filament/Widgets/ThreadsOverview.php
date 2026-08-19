@@ -14,15 +14,15 @@ class ThreadsOverview extends StatsOverviewWidget
     protected function getStats(): array
     {
         return [
-            Stat::make('已綁定帳號', ThreadsAccount::query()->count())
+            Stat::make('已綁定帳號', ThreadsAccount::query()->where('user_id', auth()->id())->count())
                 ->description('Threads 帳號總數')
                 ->color('success'),
 
-            Stat::make('待回覆留言', Reply::query()->where('status', ReplyStatus::New)->count())
+            Stat::make('待回覆留言', Reply::query()->where('user_id', auth()->id())->where('status', ReplyStatus::New)->count())
                 ->description('尚未處理的回覆')
                 ->color('danger'),
 
-            Stat::make('需重新授權', ThreadsAccount::query()->where('status', ThreadsAccountStatus::NeedsReauth)->count())
+            Stat::make('需重新授權', ThreadsAccount::query()->where('user_id', auth()->id())->where('status', ThreadsAccountStatus::NeedsReauth)->count())
                 ->description('token 失效的帳號')
                 ->color('warning'),
         ];

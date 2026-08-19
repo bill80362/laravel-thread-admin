@@ -10,6 +10,7 @@ use App\Services\ThreadsClient;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class PublishScheduledPost implements ShouldQueue
 {
@@ -56,9 +57,19 @@ class PublishScheduledPost implements ShouldQueue
             return;
         }
 
+        // 停用的使用者：排程貼文不發佈
+        if ($post->user !== null && ! $post->user->is_active) {
+            return;
+        }
+
         try {
             if ($this->creationId === null) {
-                $creationId = $threads->createTextContainer($account, $post->text);
+                if ($post->image_path !== null) {
+                    $imageUrl = Storage::disk('public')->url($post->image_path);
+                    $creationId = $threads->createImageContainer($account, $imageUrl, $post->text);
+                } else {
+                    $creationId = $threads->createTextContainer($account, $post->text);
+                }
                 $post->update(['status' => PostStatus::Publishing]);
 
                 static::dispatch($this->postId, $creationId)

@@ -6,6 +6,7 @@ use App\Enums\PostStatus;
 use App\Services\PostService;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
+use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -19,6 +20,11 @@ class PostsTable
                     ->label('帳號')
                     ->formatStateUsing(fn (?string $state): string => $state ? "@{$state}" : '-')
                     ->sortable(),
+
+                ImageColumn::make('image_path')
+                    ->label('圖片')
+                    ->disk('public')
+                    ->placeholder('無圖片'),
 
                 TextColumn::make('text')
                     ->label('內容')

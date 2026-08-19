@@ -19,6 +19,7 @@ class Post extends Model
         'threads_account_id',
         'threads_media_id',
         'text',
+        'image_path',
         'scheduled_at',
         'published_at',
         'status',
@@ -68,5 +69,15 @@ class Post extends Model
     public function replies(): HasMany
     {
         return $this->hasMany(Reply::class);
+    }
+
+    /**
+     * 刪除 Post 時 cascade 刪除關聯的 Reply（不使用 FK）。
+     */
+    protected static function booted(): void
+    {
+        static::deleting(function (Post $post) {
+            $post->replies->each(fn ($reply) => $reply->delete());
+        });
     }
 }

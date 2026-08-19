@@ -130,6 +130,28 @@ class ThreadsClient
     }
 
     /**
+     * Create an image media container for a post.
+     *
+     * @param  string|null  $text  optional caption text
+     */
+    public function createImageContainer(ThreadsAccount $account, string $imageUrl, ?string $text = null): string
+    {
+        $params = [
+            'media_type' => 'IMAGE',
+            'image_url' => $imageUrl,
+            'access_token' => $account->access_token,
+        ];
+
+        if ($text !== null && $text !== '') {
+            $params['text'] = $text;
+        }
+
+        $data = $this->request('POST', "/{$account->threads_user_id}/threads", $params);
+
+        return $data['id'];
+    }
+
+    /**
      * Publish a media container and return the resulting media ID.
      */
     public function publishContainer(ThreadsAccount $account, string $creationId): string

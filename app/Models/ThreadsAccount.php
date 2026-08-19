@@ -70,4 +70,15 @@ class ThreadsAccount extends Model
     {
         return $this->hasMany(Reply::class);
     }
+
+    /**
+     * 刪除 ThreadsAccount 時 cascade 刪除關聯的 Post 和 Reply（不使用 FK）。
+     */
+    protected static function booted(): void
+    {
+        static::deleting(function (ThreadsAccount $account) {
+            $account->posts->each(fn ($post) => $post->delete());
+            $account->replies->each(fn ($reply) => $reply->delete());
+        });
+    }
 }

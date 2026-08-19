@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Posts\Schemas;
 use App\Enums\ThreadsAccountStatus;
 use App\Models\ThreadsAccount;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Infolists\Components\TextEntry;
@@ -41,12 +42,21 @@ class PostForm
                     ->required()
                     ->helperText(fn ($get) => self::getAccountWarning($get('threads_account_id'))),
 
+                FileUpload::make('image')
+                    ->label('圖片')
+                    ->image()
+                    ->disk('public')
+                    ->directory('posts')
+                    ->acceptedFileTypes(['image/jpeg', 'image/png'])
+                    ->maxSize(8192)
+                    ->helperText('支援 JPEG、PNG，最大 8MB。文字與圖片至少需填寫一項。'),
+
                 Textarea::make('text')
                     ->label('貼文內容')
-                    ->required()
+                    ->nullable()
                     ->maxLength(500)
                     ->rows(4)
-                    ->helperText('最多 500 字元'),
+                    ->helperText('最多 500 字元。文字與圖片至少需填寫一項。'),
 
                 DateTimePicker::make('scheduled_at')
                     ->label('排程時間')
