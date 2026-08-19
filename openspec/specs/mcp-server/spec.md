@@ -5,17 +5,13 @@
 
 ## Requirements
 
-### Requirement: MCP 伺服器以本地與 HTTP 兩種方式提供
-系統 SHALL 提供一個 MCP 伺服器，並同時以本地（Artisan command）與 HTTP 兩種方式註冊，讓 AI agent 得以連線使用。
+### Requirement: MCP Threads 帳號僅可讀取
+系統 SHALL 在 MCP 中僅提供 Threads 帳號的讀取功能（`list-accounts`），不提供新增、修改或刪除帳號的工具。
 
-#### Scenario: 本地方式啟動伺服器
-- **WHEN** AI agent 以本地方式啟動 MCP 伺服器
-- **THEN** 系統 SHALL 以 Artisan command 形式提供伺服器，無需 HTTP 伺服器
-
-#### Scenario: HTTP 方式存取伺服器
-- **WHEN** AI agent 透過 HTTP POST 連線到 MCP 端點
-- **THEN** 系統 SHALL 提供可供遠端存取的 MCP 端點
-- **AND** 端點 SHALL 受到 Passport OAuth（`auth:api`）保護
+#### Scenario: MCP 不包含帳號管理工具
+- **WHEN** AI agent 查詢 MCP 伺服器提供的工具清單
+- **THEN** 工具清單 SHALL 包含 `list-accounts`（唯讀）
+- **AND** 工具清單 SHALL 不包含任何帳號新增、修改或刪除的工具
 
 ### Requirement: 列出可用帳號
 系統 SHALL 提供 `list-accounts` 工具，回傳 OAuth token 所屬使用者下可供發文與回覆的已綁定 Threads 帳號清單。
