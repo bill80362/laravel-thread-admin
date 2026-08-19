@@ -171,6 +171,20 @@ class ThreadsClient
     }
 
     /**
+     * Delete a Threads media object.
+     *
+     * @see https://developers.facebook.com/docs/threads/reference/publishing#delete-a-threads-media-object
+     */
+    public function deleteMedia(ThreadsAccount $account, string $mediaId): bool
+    {
+        $this->request('DELETE', "/{$mediaId}", [
+            'access_token' => $account->access_token,
+        ]);
+
+        return true;
+    }
+
+    /**
      * Send a raw request to the Threads API and decode the JSON response.
      *
      * @param  array<string, mixed>  $params
@@ -178,7 +192,10 @@ class ThreadsClient
      */
     private function request(string $method, string $path, array $params, string $base = self::API_BASE): array
     {
-        $options = $method === 'GET' ? ['query' => $params] : ['form_params' => $params];
+        $options = match ($method) {
+            'GET', 'DELETE' => ['query' => $params],
+            default => ['form_params' => $params],
+        };
 
         try {
             $response = $this->http->request($method, $base.$path, $options);

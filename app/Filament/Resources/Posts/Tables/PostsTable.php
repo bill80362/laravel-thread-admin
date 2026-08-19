@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Posts\Tables;
 
 use App\Enums\PostStatus;
+use App\Services\PostService;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
@@ -51,7 +52,10 @@ class PostsTable
                 EditAction::make()
                     ->visible(fn ($record) => in_array($record->status, [PostStatus::Draft, PostStatus::Scheduled])),
                 DeleteAction::make()
-                    ->visible(fn ($record) => in_array($record->status, [PostStatus::Draft, PostStatus::Scheduled])),
+                    ->visible(fn ($record) => ! in_array($record->status, [PostStatus::Deleting]))
+                    ->action(function ($record) {
+                        app(PostService::class)->delete($record->id);
+                    }),
             ]);
     }
 }

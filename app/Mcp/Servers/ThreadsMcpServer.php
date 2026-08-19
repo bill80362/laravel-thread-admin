@@ -16,7 +16,7 @@ use Laravel\Mcp\Server\Tool;
 
 #[Name('Threads 管理伺服器')]
 #[Version('1.0.0')]
-#[Instructions('此伺服器提供 Threads 帳號管理、排程貼文與回覆功能。使用前請先在後台介面綁定 Threads 帳號。')]
+#[Instructions('此伺服器提供 Threads 帳號查詢、排程貼文與回覆功能。使用前請先在後台介面綁定 Threads 帳號。帳號僅供讀取，不提供新增／修改／刪除。')]
 class ThreadsMcpServer extends Server
 {
     /**

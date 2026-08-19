@@ -12,6 +12,8 @@ enum PostStatus: string implements HasColor, HasLabel
     case Publishing = 'publishing';
     case Published = 'published';
     case Failed = 'failed';
+    case Deleting = 'deleting';
+    case DeleteFailed = 'delete_failed';
 
     public function getLabel(): ?string
     {
@@ -21,6 +23,8 @@ enum PostStatus: string implements HasColor, HasLabel
             self::Publishing => '發佈中',
             self::Published => '已發佈',
             self::Failed => '失敗',
+            self::Deleting => '刪除中',
+            self::DeleteFailed => '刪除失敗',
         };
     }
 
@@ -32,6 +36,8 @@ enum PostStatus: string implements HasColor, HasLabel
             self::Publishing => 'info',
             self::Published => 'success',
             self::Failed => 'danger',
+            self::Deleting => 'warning',
+            self::DeleteFailed => 'danger',
         };
     }
 }

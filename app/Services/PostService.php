@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\PostStatus;
+use App\Jobs\DeletePost;
 use App\Models\Post;
 use App\Models\ThreadsAccount;
 use Illuminate\Database\Eloquent\Collection;
@@ -69,5 +70,28 @@ class PostService
         $userId ??= auth()->id();
 
         return Post::query()->with('threadsAccount')->where('user_id', $userId)->find($id);
+    }
+
+    /**
+     * 觸發刪除貼文流程。
+     * - Published / DeleteFailed：設為 Deleting → dispatch DeletePost job
+     * - 其他狀態：直接刪除本地記錄
+     */
+    public function delete(int $id, ?int $userId = null): void
+    {
+        $userId ??= auth()->id();
+
+        $post = Post::query()->where('user_id', $userId)->find($id);
+
+        if ($post === null) {
+            throw new InvalidArgumentException('貼文不存在或無權存取');
+        }
+
+        if (in_array($post->status, [PostStatus::Published, PostStatus::DeleteFailed], true)) {
+            $post->update(['status' => PostStatus::Deleting]);
+            DeletePost::dispatch($post->id);
+        } else {
+            $post->delete();
+        }
     }
 }
