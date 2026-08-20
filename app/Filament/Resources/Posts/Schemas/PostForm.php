@@ -65,15 +65,6 @@ class PostForm
                     ->maxItems(10)
                     ->addActionLabel('新增圖片')
                     ->columns(1)
-                    ->saveRelationshipsUsing(function ($record, $state) {
-                        $record->images()->delete();
-                        foreach (array_values(array_filter($state, fn ($s) => ! empty($s['image_path']))) as $index => $item) {
-                            $record->images()->create([
-                                'image_path' => $item['image_path'],
-                                'sort_order' => $index,
-                            ]);
-                        }
-                    })
                     ->disabled(fn ($get, string $operation): bool => $operation === 'edit' && ! in_array($get('status'), [PostStatus::Draft->value, PostStatus::Scheduled->value]))
                     ->helperText('支援 JPEG、PNG，最大 8MB，最多 10 張。文字與圖片至少需填寫一項。'),
 
