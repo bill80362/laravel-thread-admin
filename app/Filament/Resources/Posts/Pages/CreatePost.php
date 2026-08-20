@@ -18,6 +18,11 @@ class CreatePost extends CreateRecord
 
         $data['user_id'] = auth()->id();
 
+        // 過濾掉空的圖片記錄（未上傳圖片的 Repeater item）
+        if (! empty($data['images'])) {
+            $data['images'] = array_values(array_filter($data['images'], fn ($img) => ! empty($img['image_path'])));
+        }
+
         return $data;
     }
 }

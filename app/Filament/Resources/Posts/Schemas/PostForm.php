@@ -8,6 +8,7 @@ use App\Models\ThreadsAccount;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Infolists\Components\TextEntry;
@@ -47,15 +48,34 @@ class PostForm
                     ->disabled(fn ($get, string $operation): bool => $operation === 'edit' && ! in_array($get('status'), [PostStatus::Draft->value, PostStatus::Scheduled->value]))
                     ->helperText(fn ($get) => self::getAccountWarning($get('threads_account_id'))),
 
-                FileUpload::make('image_path')
+                Repeater::make('images')
                     ->label('圖片')
-                    ->image()
-                    ->disk('public')
-                    ->directory('posts')
-                    ->acceptedFileTypes(['image/jpeg', 'image/png'])
-                    ->maxSize(8192)
+                    ->relationship()
+                    ->schema([
+                        FileUpload::make('image_path')
+                            ->label('圖片檔案')
+                            ->image()
+                            ->disk('public')
+                            ->directory('posts')
+                            ->acceptedFileTypes(['image/jpeg', 'image/png'])
+                            ->maxSize(8192),
+                    ])
+                    ->orderColumn('sort_order')
+                    ->reorderable()
+                    ->maxItems(10)
+                    ->addActionLabel('新增圖片')
+                    ->columns(1)
+                    ->saveRelationshipsUsing(function ($record, $state) {
+                        $record->images()->delete();
+                        foreach (array_values(array_filter($state, fn ($s) => ! empty($s['image_path']))) as $index => $item) {
+                            $record->images()->create([
+                                'image_path' => $item['image_path'],
+                                'sort_order' => $index,
+                            ]);
+                        }
+                    })
                     ->disabled(fn ($get, string $operation): bool => $operation === 'edit' && ! in_array($get('status'), [PostStatus::Draft->value, PostStatus::Scheduled->value]))
-                    ->helperText('支援 JPEG、PNG，最大 8MB。文字與圖片至少需填寫一項。'),
+                    ->helperText('支援 JPEG、PNG，最大 8MB，最多 10 張。文字與圖片至少需填寫一項。'),
 
                 Textarea::make('text')
                     ->label('貼文內容')

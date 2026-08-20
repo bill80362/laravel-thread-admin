@@ -25,6 +25,8 @@ class UserResource extends Resource
 
     protected static ?string $modelLabel = '使用者';
 
+    protected static ?string $pluralModelLabel = '使用者';
+
     protected static ?int $navigationSort = 10;
 
     public static function form(Schema $schema): Schema

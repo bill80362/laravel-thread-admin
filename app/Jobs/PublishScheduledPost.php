@@ -34,18 +34,21 @@ class PublishScheduledPost implements ShouldQueue
     public function __construct(
         private readonly int $postId,
         private readonly ?string $creationId = null,
+        private readonly ?array $childIds = null,
     ) {}
 
     /**
-     * Execute the two-stage publish flow.
+     * Execute the three-stage publish flow.
      */
     public function handle(ThreadsClient $threads): void
     {
-        $post = Post::query()->find($this->postId);
+        $post = Post::query()->with('images')->find($this->postId);
 
-        $expectedStatus = $this->creationId === null
-            ? PostStatus::Scheduled
-            : PostStatus::Publishing;
+        // 判斷當前階段
+        $isStage1 = $this->creationId === null && $this->childIds === null;
+        $isStage2 = $this->creationId === null && $this->childIds !== null;
+
+        $expectedStatus = $isStage1 ? PostStatus::Scheduled : PostStatus::Publishing;
 
         if ($post === null || $post->status !== $expectedStatus) {
             return;
@@ -63,17 +66,32 @@ class PublishScheduledPost implements ShouldQueue
         }
 
         try {
-            if ($this->creationId === null) {
-                if ($post->image_path !== null) {
-                    // Filament 上傳：相對路徑，需轉換為完整 URL
-                    // MCP image_url：已是完整 URL，直接使用
-                    $imageUrl = str_starts_with($post->image_path, 'http')
-                        ? $post->image_path
-                        : Storage::disk('public')->url($post->image_path);
+            // --- Stage 1: 建立 container(s) ---
+            if ($isStage1) {
+                $imageCount = $post->images->count();
+
+                if ($imageCount === 0) {
+                    // 純文字
+                    $creationId = $threads->createTextContainer($account, $post->text);
+                } elseif ($imageCount === 1) {
+                    // 單圖
+                    $imageUrl = $this->resolveImageUrl($post->images->first()->image_path);
                     $creationId = $threads->createImageContainer($account, $imageUrl, $post->text);
                 } else {
-                    $creationId = $threads->createTextContainer($account, $post->text);
+                    // 多圖 Carousel: 為每張圖建立 is_carousel_item container
+                    $childIds = [];
+                    foreach ($post->images as $image) {
+                        $imageUrl = $this->resolveImageUrl($image->image_path);
+                        $childIds[] = $threads->createCarouselItemContainer($account, $imageUrl);
+                    }
+                    $post->update(['status' => PostStatus::Publishing]);
+
+                    static::dispatch($this->postId, null, $childIds)
+                        ->delay(now()->addSeconds(self::PUBLISH_DELAY_SECONDS));
+
+                    return;
                 }
+
                 $post->update(['status' => PostStatus::Publishing]);
 
                 static::dispatch($this->postId, $creationId)
@@ -82,6 +100,17 @@ class PublishScheduledPost implements ShouldQueue
                 return;
             }
 
+            // --- Stage 2: 建立 Carousel container ---
+            if ($isStage2) {
+                $creationId = $threads->createCarouselContainer($account, $this->childIds, $post->text);
+
+                static::dispatch($this->postId, $creationId)
+                    ->delay(now()->addSeconds(self::PUBLISH_DELAY_SECONDS));
+
+                return;
+            }
+
+            // --- Stage 3: 發佈 ---
             $mediaId = $threads->publishContainer($account, $this->creationId);
 
             $post->update([
@@ -106,7 +135,7 @@ class PublishScheduledPost implements ShouldQueue
                 $attempt = $post->publish_attempts + 1;
                 $post->update(['publish_attempts' => $attempt]);
 
-                static::dispatch($this->postId, $this->creationId)
+                static::dispatch($this->postId, $this->creationId, $this->childIds)
                     ->delay(now()->addSeconds($attempt * self::RETRY_BACKOFF_SECONDS));
             } else {
                 $post->update([
@@ -125,5 +154,17 @@ class PublishScheduledPost implements ShouldQueue
                 'error' => $e->getMessage(),
             ]);
         }
+    }
+
+    /**
+     * 將 image_path 轉換為完整公開 URL。
+     */
+    private function resolveImageUrl(string $imagePath): string
+    {
+        if (str_starts_with($imagePath, 'http')) {
+            return $imagePath;
+        }
+
+        return Storage::disk('public')->url($imagePath);
     }
 }

@@ -14,7 +14,7 @@ class PostService
     /**
      * 建立一筆排程貼文。
      *
-     * @param  array{threads_account_id: int, text?: string, image_path?: string, image_url?: string, scheduled_at: string}  $data
+     * @param  array{threads_account_id: int, text?: string, image_paths?: string[], image_urls?: string[], scheduled_at: string}  $data
      */
     public function create(array $data): Post
     {
@@ -28,8 +28,22 @@ class PostService
             throw new InvalidArgumentException('帳號不存在或無權存取');
         }
 
+        // 收集圖片路徑：統一轉為陣列
+        $imagePaths = [];
+
+        if (! empty($data['image_paths'])) {
+            $imagePaths = $data['image_paths'];
+        } elseif (! empty($data['image_urls'])) {
+            $imagePaths = $data['image_urls'];
+        }
+
+        // 驗證圖片數量上限
+        if (count($imagePaths) > 10) {
+            throw new InvalidArgumentException('圖片數量上限為 10 張');
+        }
+
         // 驗證至少要有 text 或 image
-        if (empty($data['text']) && empty($data['image_path']) && empty($data['image_url'])) {
+        if (empty($data['text']) && empty($imagePaths)) {
             throw new InvalidArgumentException('貼文內容或圖片至少需填寫一項');
         }
 
@@ -39,17 +53,17 @@ class PostService
         $post->text = $data['text'] ?? null;
         $post->scheduled_at = $data['scheduled_at'];
         $post->status = PostStatus::Scheduled;
-
-        // 處理圖片（來自 Filament 上傳或 MCP image_url）
-        if (! empty($data['image_path'])) {
-            $post->image_path = $data['image_path'];
-        } elseif (! empty($data['image_url'])) {
-            $post->image_path = $data['image_url'];
-        }
-
         $post->save();
 
-        return $post;
+        // 儲存圖片記錄
+        foreach ($imagePaths as $index => $path) {
+            $post->images()->create([
+                'image_path' => $path,
+                'sort_order' => $index,
+            ]);
+        }
+
+        return $post->load('images');
     }
 
     /**
@@ -62,7 +76,7 @@ class PostService
     {
         $userId ??= auth()->id();
 
-        $query = Post::query()->with('threadsAccount')->where('user_id', $userId);
+        $query = Post::query()->with(['threadsAccount', 'images'])->where('user_id', $userId);
 
         if (! empty($filters['threads_account_id'])) {
             $query->where('threads_account_id', $filters['threads_account_id']);
@@ -82,7 +96,7 @@ class PostService
     {
         $userId ??= auth()->id();
 
-        return Post::query()->with('threadsAccount')->where('user_id', $userId)->find($id);
+        return Post::query()->with(['threadsAccount', 'images'])->where('user_id', $userId)->find($id);
     }
 
     /**

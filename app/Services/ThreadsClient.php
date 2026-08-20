@@ -152,6 +152,50 @@ class ThreadsClient
     }
 
     /**
+     * Create a carousel item media container (is_carousel_item=true).
+     *
+     * @see https://developers.facebook.com/docs/threads/posts#carousel-posts
+     */
+    public function createCarouselItemContainer(ThreadsAccount $account, string $imageUrl): string
+    {
+        $params = [
+            'media_type' => 'IMAGE',
+            'image_url' => $imageUrl,
+            'is_carousel_item' => 'true',
+            'access_token' => $account->access_token,
+        ];
+
+        $data = $this->request('POST', "/{$account->threads_user_id}/threads", $params);
+
+        return $data['id'];
+    }
+
+    /**
+     * Create a carousel container that wraps carousel item containers.
+     *
+     * @param  string[]  $childrenIds
+     * @param  string|null  $text  optional caption text
+     *
+     * @see https://developers.facebook.com/docs/threads/posts#carousel-posts
+     */
+    public function createCarouselContainer(ThreadsAccount $account, array $childrenIds, ?string $text = null): string
+    {
+        $params = [
+            'media_type' => 'CAROUSEL',
+            'children' => implode(',', $childrenIds),
+            'access_token' => $account->access_token,
+        ];
+
+        if ($text !== null && $text !== '') {
+            $params['text'] = $text;
+        }
+
+        $data = $this->request('POST', "/{$account->threads_user_id}/threads", $params);
+
+        return $data['id'];
+    }
+
+    /**
      * Publish a media container and return the resulting media ID.
      */
     public function publishContainer(ThreadsAccount $account, string $creationId): string

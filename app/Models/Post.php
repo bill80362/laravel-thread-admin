@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 class Post extends Model
 {
@@ -19,7 +20,6 @@ class Post extends Model
         'threads_account_id',
         'threads_media_id',
         'text',
-        'image_path',
         'scheduled_at',
         'published_at',
         'status',
@@ -72,11 +72,28 @@ class Post extends Model
     }
 
     /**
-     * 刪除 Post 時 cascade 刪除關聯的 Reply（不使用 FK）。
+     * The images attached to this post.
+     *
+     * @return HasMany<PostImage>
+     */
+    public function images(): HasMany
+    {
+        return $this->hasMany(PostImage::class)->orderBy('sort_order');
+    }
+
+    /**
+     * 刪除 Post 時 cascade 刪除關聯的圖片檔案與 Reply（不使用 FK）。
      */
     protected static function booted(): void
     {
         static::deleting(function (Post $post) {
+            // 刪除圖片檔案
+            $post->images->each(function (PostImage $image) {
+                if (! str_starts_with($image->image_path, 'http') && Storage::disk('public')->exists($image->image_path)) {
+                    Storage::disk('public')->delete($image->image_path);
+                }
+            });
+            // 刪除關聯 Reply
             $post->replies->each(fn ($reply) => $reply->delete());
         });
     }
