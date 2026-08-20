@@ -31,6 +31,7 @@ class UserPanelProvider extends PanelProvider
             ->default()
             ->id('user')
             ->path('user')
+            ->brandName(config('branding.user.name'))
             ->login()
             ->profile(EditPassword::class)
             ->colors([
