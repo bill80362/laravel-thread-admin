@@ -11,11 +11,16 @@ use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\TextInput;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\Layout\Stack;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Storage;
 
 class ListPosts extends ListRecords
@@ -66,6 +71,79 @@ class ListPosts extends ListRecords
                 'md' => 2,
                 'xl' => 3,
             ])
+            ->filters([
+                SelectFilter::make('status')
+                    ->label('狀態')
+                    ->options(PostStatus::class),
+
+                SelectFilter::make('threads_account_id')
+                    ->label('帳號')
+                    ->relationship('threadsAccount', 'username', modifyQueryUsing: fn (Builder $query): Builder => $query->where('user_id', auth()->id())),
+
+                Filter::make('published_at_range')
+                    ->label('發佈時間')
+                    ->schema([
+                        DatePicker::make('published_from')
+                            ->label('從'),
+                        DatePicker::make('published_until')
+                            ->label('到'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['published_from'] ?? null,
+                                fn (Builder $query, string $date): Builder => $query->whereDate('published_at', '>=', $date),
+                            )
+                            ->when(
+                                $data['published_until'] ?? null,
+                                fn (Builder $query, string $date): Builder => $query->whereDate('published_at', '<=', $date),
+                            );
+                    }),
+
+                Filter::make('scheduled_at_range')
+                    ->label('排程時間')
+                    ->schema([
+                        DatePicker::make('scheduled_from')
+                            ->label('從'),
+                        DatePicker::make('scheduled_until')
+                            ->label('到'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['scheduled_from'] ?? null,
+                                fn (Builder $query, string $date): Builder => $query->whereDate('scheduled_at', '>=', $date),
+                            )
+                            ->when(
+                                $data['scheduled_until'] ?? null,
+                                fn (Builder $query, string $date): Builder => $query->whereDate('scheduled_at', '<=', $date),
+                            );
+                    }),
+
+                Filter::make('text_search')
+                    ->label('內容')
+                    ->schema([
+                        TextInput::make('text')
+                            ->label('內容關鍵字'),
+                    ])
+                    ->query(fn (Builder $query, array $data): Builder => $query
+                        ->when(
+                            $data['text'] ?? null,
+                            fn (Builder $query, string $keyword): Builder => $query->where('text', 'like', "%{$keyword}%"),
+                        )),
+
+                Filter::make('error_search')
+                    ->label('錯誤訊息')
+                    ->schema([
+                        TextInput::make('error_message')
+                            ->label('錯誤訊息關鍵字'),
+                    ])
+                    ->query(fn (Builder $query, array $data): Builder => $query
+                        ->when(
+                            $data['error_message'] ?? null,
+                            fn (Builder $query, string $keyword): Builder => $query->where('error_message', 'like', "%{$keyword}%"),
+                        )),
+            ])
             ->columns([
                 Stack::make([
                     // 圖片區域：固定 aspect-ratio，永遠佔據相同高度
@@ -101,10 +179,12 @@ class ListPosts extends ListRecords
                     Stack::make([
                         TextColumn::make('threadsAccount.username')
                             ->formatStateUsing(fn (?string $state): string => $state ? "@{$state}" : '-')
-                            ->weight('bold'),
+                            ->weight('bold')
+                            ->sortable(),
 
                         TextColumn::make('status')
-                            ->badge(),
+                            ->badge()
+                            ->sortable(),
 
                         TextColumn::make('unread_badge')
                             ->label('')
@@ -124,12 +204,18 @@ class ListPosts extends ListRecords
                         TextColumn::make('scheduled_at')
                             ->dateTime('m-d H:i')
                             ->color('gray')
-                            ->size('sm'),
+                            ->size('sm')
+                            ->sortable(),
                     ])->space(1)
                         ->extraAttributes(['class' => 'p-3 min-h-[120px]']),
                 ])->space(0)
                     ->extraAttributes(['class' => 'bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200']),
             ])
+            ->defaultSort(function (Builder $query): Builder {
+                return $query
+                    ->orderByRaw('scheduled_at IS NULL')
+                    ->orderBy('scheduled_at', 'desc');
+            })
             ->recordActions([
                 Action::make('viewReplies')
                     ->label('回覆')

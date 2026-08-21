@@ -70,6 +70,20 @@
 - **WHEN** 使用者在後台編輯貼文時刪除其中一張圖片
 - **THEN** 系統 SHALL 移除該圖片記錄與儲存檔案
 
+#### Scenario: 建立貼文時含空圖片 item
+- **WHEN** 使用者在後台建立貼文，新增了圖片 item 但未上傳任何檔案（`image_path` 為空）
+- **THEN** 系統 SHALL 跳過該空圖片 item，不在 `post_images` 表中建立記錄
+- **AND** 系統 SHALL 正常建立貼文，不因空圖片 item 而失敗
+
+#### Scenario: 編輯貼文時含空圖片 item
+- **WHEN** 使用者在後台編輯貼文，表單中存在 `image_path` 為空的圖片 item
+- **THEN** 系統 SHALL 跳過該空圖片 item，不寫入 `post_images` 表
+
+#### Scenario: 非排程中狀態不可編輯圖片與內文
+- **WHEN** 使用者編輯狀態非 `Draft` 或 `Scheduled` 的貼文（如已發佈、刪除中）
+- **THEN** 系統 SHALL 停用圖片上傳與內文編輯欄位
+- **AND** 系統 SHALL 拒絕儲存該貼文的任何變更
+
 ### Requirement: MCP 多圖 URL 支援
 系統 SHALL 在 MCP `create-post` 工具中支援傳入多個圖片 URL。
 
