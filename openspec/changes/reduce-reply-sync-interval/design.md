@@ -15,12 +15,12 @@
 ## Decisions
 
 ### 調整 `SYNC_INTERVAL_MINUTES` 為 2
-單一常數調整即可改變同步頻率。每日每帳號 API 呼叫約 720 次，仍在 Threads 回覆 rate limit（1,000 次/24h）內。
+單一常數調整即可改變同步頻率。抓回覆（`GET /{media_id}/replies`）屬於讀取操作，不受發文/發回覆的 publishing rate limit（250 篇 / 1,000 則，皆為 24h）限制，而是受「App 呼叫次數」（`4800 × impressions` / 24h）限制。每日每帳號約 720 次讀取，對 App 呼叫次數而言在安全範圍內。
 
 ### 同步更新使用說明硬編碼文字
 `chapter4.blade.php` 的「5 分鐘」改為「2 分鐘」。`replies-sync-notice.blade.php` 已動態讀取 `$syncInterval`，無需修改。
 
 ## Risks / Trade-offs
 
-- **API 呼叫次數增加**（288→720 次/日/帳號）→ 仍在 rate limit 內，但多帳號時需留意總量；若未來帳號數增加可再評估。
+- **App 呼叫次數增加**（288→720 次/日/帳號）→ 受 `4800 × impressions` 限制，一般帳號曝光量下遠低於上限；但多帳號時需留意總量，若未來帳號數增加可再評估。
 - **使用說明與常數可能再次不同步** → 目前 chapter4 為硬編碼，未來調整常數時需同步更新（既有已知限制）。
