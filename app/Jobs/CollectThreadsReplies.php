@@ -20,7 +20,7 @@ class CollectThreadsReplies implements ShouldQueue
     /**
      * Minimum interval (in minutes) between syncs per account.
      */
-    public const SYNC_INTERVAL_MINUTES = 5;
+    public const SYNC_INTERVAL_MINUTES = 2;
 
     public function __construct() {}
 
