@@ -180,4 +180,85 @@ class ReplyServiceTest extends TestCase
         $this->assertCount(1, $result);
         $this->assertSame($replyOwn->id, $result->first()->id);
     }
+
+    public function test_unread_count_counts_only_unread_replies(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $account = ThreadsAccount::factory()->create(['user_id' => $user->id]);
+        $post = Post::factory()->published()->create(['threads_account_id' => $account->id, 'user_id' => $user->id]);
+
+        Reply::factory()->create([
+            'user_id' => $user->id,
+            'threads_account_id' => $account->id,
+            'post_id' => $post->id,
+            'read_at' => null,
+        ]);
+        Reply::factory()->create([
+            'user_id' => $user->id,
+            'threads_account_id' => $account->id,
+            'post_id' => $post->id,
+            'read_at' => now(),
+        ]);
+
+        $this->assertSame(1, app(ReplyService::class)->unreadCount($post->id));
+    }
+
+    public function test_mark_as_read_updates_all_replies_of_post(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $account = ThreadsAccount::factory()->create(['user_id' => $user->id]);
+        $post = Post::factory()->published()->create(['threads_account_id' => $account->id, 'user_id' => $user->id]);
+
+        $replyA = Reply::factory()->create([
+            'user_id' => $user->id,
+            'threads_account_id' => $account->id,
+            'post_id' => $post->id,
+            'read_at' => null,
+        ]);
+        $replyB = Reply::factory()->create([
+            'user_id' => $user->id,
+            'threads_account_id' => $account->id,
+            'post_id' => $post->id,
+            'read_at' => null,
+        ]);
+
+        $updated = app(ReplyService::class)->markAsRead($post->id);
+
+        $this->assertSame(2, $updated);
+        $this->assertNotNull($replyA->fresh()->read_at);
+        $this->assertNotNull($replyB->fresh()->read_at);
+        $this->assertSame(0, app(ReplyService::class)->unreadCount($post->id));
+    }
+
+    public function test_mark_as_read_ignores_other_posts(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $account = ThreadsAccount::factory()->create(['user_id' => $user->id]);
+        $postA = Post::factory()->published()->create(['threads_account_id' => $account->id, 'user_id' => $user->id]);
+        $postB = Post::factory()->published()->create(['threads_account_id' => $account->id, 'user_id' => $user->id]);
+
+        Reply::factory()->create([
+            'user_id' => $user->id,
+            'threads_account_id' => $account->id,
+            'post_id' => $postA->id,
+            'read_at' => null,
+        ]);
+        $replyOther = Reply::factory()->create([
+            'user_id' => $user->id,
+            'threads_account_id' => $account->id,
+            'post_id' => $postB->id,
+            'read_at' => null,
+        ]);
+
+        app(ReplyService::class)->markAsRead($postA->id);
+
+        $this->assertNull($replyOther->fresh()->read_at);
+        $this->assertSame(1, app(ReplyService::class)->unreadCount($postB->id));
+    }
 }

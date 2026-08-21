@@ -7,6 +7,7 @@ use App\Filament\Resources\Posts\Pages\CreatePost;
 use App\Filament\Resources\Posts\Pages\EditPost;
 use App\Filament\Resources\Posts\Pages\ListPosts;
 use App\Models\Post;
+use App\Models\Reply;
 use App\Models\ThreadsAccount;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -148,5 +149,77 @@ class PostResourceTest extends TestCase
             ->test(ListPosts::class)
             ->assertCanSeeTableRecords([$postA])
             ->assertCanNotSeeTableRecords([$postB]);
+    }
+
+    public function test_list_posts_shows_reply_action(): void
+    {
+        $user = User::factory()->create();
+        $account = ThreadsAccount::factory()->create(['user_id' => $user->id]);
+        $post = Post::factory()->create([
+            'threads_account_id' => $account->id,
+            'user_id' => $user->id,
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(ListPosts::class)
+            ->assertSee('回覆');
+    }
+
+    public function test_list_posts_shows_unread_badge_when_has_unread_replies(): void
+    {
+        $user = User::factory()->create();
+        $account = ThreadsAccount::factory()->create(['user_id' => $user->id]);
+        $post = Post::factory()->create([
+            'threads_account_id' => $account->id,
+            'user_id' => $user->id,
+        ]);
+
+        Reply::factory()->create([
+            'user_id' => $user->id,
+            'threads_account_id' => $account->id,
+            'post_id' => $post->id,
+            'read_at' => null,
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(ListPosts::class)
+            ->assertSee('有新回覆');
+    }
+
+    public function test_list_posts_hides_unread_badge_when_all_read(): void
+    {
+        $user = User::factory()->create();
+        $account = ThreadsAccount::factory()->create(['user_id' => $user->id]);
+        $post = Post::factory()->create([
+            'threads_account_id' => $account->id,
+            'user_id' => $user->id,
+        ]);
+
+        Reply::factory()->create([
+            'user_id' => $user->id,
+            'threads_account_id' => $account->id,
+            'post_id' => $post->id,
+            'read_at' => now(),
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(ListPosts::class)
+            ->assertDontSee('有新回覆');
+    }
+
+    public function test_open_reply_drawer_sets_post_id_and_opens(): void
+    {
+        $user = User::factory()->create();
+        $account = ThreadsAccount::factory()->create(['user_id' => $user->id]);
+        $post = Post::factory()->create([
+            'threads_account_id' => $account->id,
+            'user_id' => $user->id,
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(ListPosts::class)
+            ->call('openReplyDrawer', $post->id)
+            ->assertSet('replyDrawerOpen', true)
+            ->assertSet('replyDrawerPostId', $post->id);
     }
 }

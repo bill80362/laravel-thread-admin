@@ -26,6 +26,7 @@ class Reply extends Model
         'error_message',
         'publish_attempts',
         'replied_at',
+        'read_at',
     ];
 
     /**
@@ -39,6 +40,7 @@ class Reply extends Model
             'source' => ReplySource::class,
             'status' => ReplyStatus::class,
             'replied_at' => 'datetime',
+            'read_at' => 'datetime',
             'publish_attempts' => 'integer',
         ];
     }

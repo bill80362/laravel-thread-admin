@@ -48,6 +48,27 @@ class CollectThreadsRepliesTest extends TestCase
         $this->assertSame(2, Reply::query()->count());
     }
 
+    public function test_new_replies_are_inserted_as_unread(): void
+    {
+        $account = ThreadsAccount::factory()->create();
+        $post = Post::factory()->published()->create([
+            'threads_account_id' => $account->id,
+        ]);
+
+        $threads = Mockery::mock(ThreadsClient::class);
+        $threads->shouldReceive('getReplies')
+            ->once()
+            ->andReturn([
+                ['id' => 'reply-unread', 'username' => 'user1', 'text' => 'hi'],
+            ]);
+
+        $job = new CollectThreadsReplies;
+        $job->handle($threads);
+
+        $reply = Reply::query()->where('threads_reply_id', 'reply-unread')->firstOrFail();
+        $this->assertNull($reply->read_at);
+    }
+
     public function test_duplicate_replies_are_not_inserted(): void
     {
         $account = ThreadsAccount::factory()->create();

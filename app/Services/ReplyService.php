@@ -83,6 +83,34 @@ class ReplyService
     }
 
     /**
+     * 將某貼文的所有回覆標記為已讀，回傳更新的筆數。
+     */
+    public function markAsRead(int $postId, ?int $userId = null): int
+    {
+        $userId ??= auth()->id();
+
+        return Reply::query()
+            ->where('user_id', $userId)
+            ->where('post_id', $postId)
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+    }
+
+    /**
+     * 計算某貼文的未讀回覆數。
+     */
+    public function unreadCount(int $postId, ?int $userId = null): int
+    {
+        $userId ??= auth()->id();
+
+        return Reply::query()
+            ->where('user_id', $userId)
+            ->where('post_id', $postId)
+            ->whereNull('read_at')
+            ->count();
+    }
+
+    /**
      * 查詢回覆清單，支援依帳號、貼文與狀態篩選。
      *
      * @param  array{threads_account_id?: int, post_id?: int, status?: string}  $filters
