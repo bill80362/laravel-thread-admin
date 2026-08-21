@@ -56,6 +56,7 @@ class CollectThreadsReplies implements ShouldQueue
                     Reply::query()->firstOrCreate(
                         ['threads_reply_id' => $reply['id']],
                         [
+                            'user_id' => $account->user_id,
                             'threads_account_id' => $account->id,
                             'post_id' => $post->id,
                             'author_username' => $reply['username'] ?? '',

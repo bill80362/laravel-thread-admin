@@ -69,6 +69,27 @@ class CollectThreadsRepliesTest extends TestCase
         $this->assertNull($reply->read_at);
     }
 
+    public function test_polled_replies_are_owned_by_the_account_user(): void
+    {
+        $account = ThreadsAccount::factory()->create();
+        $post = Post::factory()->published()->create([
+            'threads_account_id' => $account->id,
+        ]);
+
+        $threads = Mockery::mock(ThreadsClient::class);
+        $threads->shouldReceive('getReplies')
+            ->once()
+            ->andReturn([
+                ['id' => 'reply-owned', 'username' => 'user1', 'text' => 'hi'],
+            ]);
+
+        $job = new CollectThreadsReplies;
+        $job->handle($threads);
+
+        $reply = Reply::query()->where('threads_reply_id', 'reply-owned')->firstOrFail();
+        $this->assertSame($account->user_id, $reply->user_id);
+    }
+
     public function test_duplicate_replies_are_not_inserted(): void
     {
         $account = ThreadsAccount::factory()->create();
