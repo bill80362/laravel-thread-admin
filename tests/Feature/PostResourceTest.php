@@ -222,4 +222,34 @@ class PostResourceTest extends TestCase
             ->assertSet('replyDrawerOpen', true)
             ->assertSet('replyDrawerPostId', $post->id);
     }
+
+    public function test_create_post_skips_empty_image_items(): void
+    {
+        $user = User::factory()->create();
+        $account = ThreadsAccount::factory()->create(['user_id' => $user->id]);
+
+        Livewire::actingAs($user)
+            ->test(CreatePost::class)
+            ->fillForm([
+                'threads_account_id' => $account->id,
+                'text' => '這是一篇含空圖片的貼文',
+                'scheduled_at' => now()->addHour()->format('Y-m-d H:i:s'),
+                'images' => [
+                    ['image_path' => null],
+                    ['image_path' => ''],
+                ],
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $this->assertDatabaseHas('posts', [
+            'threads_account_id' => $account->id,
+            'text' => '這是一篇含空圖片的貼文',
+            'status' => PostStatus::Scheduled->value,
+        ]);
+
+        $post = Post::query()->where('text', '這是一篇含空圖片的貼文')->firstOrFail();
+        $this->assertDatabaseCount('post_images', 0);
+        $this->assertCount(0, $post->images);
+    }
 }

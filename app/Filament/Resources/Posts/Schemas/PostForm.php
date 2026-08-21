@@ -16,6 +16,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\Operation;
+use Illuminate\Database\Eloquent\Model;
 
 class PostForm
 {
@@ -67,6 +68,9 @@ class PostForm
                             ->columns(1)
                             ->columnSpan(['lg' => 1])
                             ->columnOrder(['default' => 1])
+                            // 跳過未上傳圖片的空 item（image_path 為空時回傳 null，Filament 會略過該 item）
+                            ->mutateRelationshipDataBeforeCreateUsing(fn (array $data): ?array => empty($data['image_path']) ? null : $data)
+                            ->mutateRelationshipDataBeforeSaveUsing(fn (array $data, Model $record): ?array => empty($data['image_path']) ? null : $data)
                             ->disabled(fn ($get, string $operation): bool => $operation === 'edit' && ! in_array($get('status'), [PostStatus::Draft->value, PostStatus::Scheduled->value]))
                             ->helperText('支援 JPEG、PNG，最大 8MB，最多 10 張。文字與圖片至少需填寫一項。'),
 
