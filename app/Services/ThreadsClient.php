@@ -8,6 +8,7 @@ use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
 use Psr\Http\Message\ResponseInterface;
 
 /**
@@ -263,15 +264,57 @@ class ThreadsClient
             default => ['form_params' => $params],
         };
 
+        $url = $base.$path;
+
+        $this->logCurl($method, $url, $params);
+
         try {
-            $response = $this->http->request($method, $base.$path, $options);
+            $response = $this->http->request($method, $url, $options);
         } catch (ClientException $e) {
+            $this->logResponse($e->getResponse());
+
             throw $this->toApiException($e);
         } catch (GuzzleException $e) {
+            Log::error('Threads API request failed', [
+                'method' => $method,
+                'url' => $url,
+                'error' => $e->getMessage(),
+            ]);
+
             throw new ThreadsApiException($e->getMessage(), null, null);
         }
 
         return $this->decode($response);
+    }
+
+    /**
+     * 記錄完整 curl 請求內容（暫時性除錯用）。
+     *
+     * @param  array<string, mixed>  $params
+     */
+    private function logCurl(string $method, string $url, array $params): void
+    {
+        $query = http_build_query($params);
+
+        $curl = match ($method) {
+            'GET', 'DELETE' => "curl -X {$method} '{$url}?{$query}'",
+            default => "curl -X {$method} '{$url}' -d '{$query}'",
+        };
+
+        Log::info('Threads API request', [
+            'curl' => $curl,
+        ]);
+    }
+
+    /**
+     * 記錄失敗回應的狀態碼與 body（僅供除錯用）。
+     */
+    private function logResponse(ResponseInterface $response): void
+    {
+        Log::info('Threads API error response', [
+            'status' => $response->getStatusCode(),
+            'body' => (string) $response->getBody(),
+        ]);
     }
 
     /**
@@ -283,6 +326,8 @@ class ThreadsClient
 
         if (isset($body['error'])) {
             $error = $body['error'];
+
+            $this->logResponse($response);
 
             throw new ThreadsApiException(
                 $error['message'] ?? 'Threads API error',

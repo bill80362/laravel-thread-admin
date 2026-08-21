@@ -10,7 +10,9 @@ use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Log\Events\MessageLogged;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
 use Mockery;
 use Mockery\MockInterface;
 use Tests\TestCase;
@@ -204,6 +206,66 @@ class ThreadsClientTest extends TestCase
         $result = $this->client->deleteMedia($account, 'media-id');
 
         $this->assertTrue($result);
+    }
+
+    public function test_request_logs_full_curl_content(): void
+    {
+        $account = ThreadsAccount::factory()->create();
+
+        $this->http->shouldReceive('request')
+            ->once()
+            ->andReturn(new Response(200, [], json_encode([
+                'id' => 'container-id',
+            ])));
+
+        $logged = [];
+
+        Log::listen(function (MessageLogged $event) use (&$logged): void {
+            $logged[] = $event;
+        });
+
+        $this->client->createTextContainer($account, 'hello');
+
+        $curlEvents = array_values(array_filter($logged, fn (MessageLogged $event): bool => $event->message === 'Threads API request'));
+
+        $this->assertCount(1, $curlEvents);
+        $this->assertSame('info', $curlEvents[0]->level);
+        $this->assertStringContainsString('curl -X POST', $curlEvents[0]->context['curl']);
+        $this->assertStringContainsString("/{$account->threads_user_id}/threads", $curlEvents[0]->context['curl']);
+        $this->assertStringContainsString('media_type=TEXT', $curlEvents[0]->context['curl']);
+    }
+
+    public function test_failed_request_logs_response_status_and_body(): void
+    {
+        $account = ThreadsAccount::factory()->create();
+
+        $this->http->shouldReceive('request')
+            ->once()
+            ->andReturn(new Response(400, [], json_encode([
+                'error' => [
+                    'message' => 'Invalid parameter',
+                    'code' => 100,
+                ],
+            ])));
+
+        $logged = [];
+
+        Log::listen(function (MessageLogged $event) use (&$logged): void {
+            $logged[] = $event;
+        });
+
+        try {
+            $this->client->createTextContainer($account, 'hello');
+            $this->fail('Expected ThreadsApiException was not thrown');
+        } catch (ThreadsApiException) {
+            // 預期例外
+        }
+
+        $errorEvents = array_values(array_filter($logged, fn (MessageLogged $event): bool => $event->message === 'Threads API error response'));
+
+        $this->assertCount(1, $errorEvents);
+        $this->assertSame(400, $errorEvents[0]->context['status']);
+        $this->assertStringContainsString('Invalid parameter', $errorEvents[0]->context['body']);
     }
 
     protected function tearDown(): void
