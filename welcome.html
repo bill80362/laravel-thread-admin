@@ -445,7 +445,7 @@
             <div class="pricing">
                 <div class="plan">
                     <h3>入門版</h3>
-                    <div class="price">NT$1,500 <small>/ 月</small></div>
+                    <div class="price">NT$1,000 <small>/ 月</small></div>
                     <p class="plan-desc">適合個人創作者與單一品牌</p>
                     <ul>
                         <li>1 個 Threads 帳號</li>
