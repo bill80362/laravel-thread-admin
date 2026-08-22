@@ -66,8 +66,18 @@ php artisan make:filament-user
 2. 記下 **Threads App ID** 與 **App Secret**（與 Facebook App ID 不同）
 3. 在 App Dashboard → **App roles** → **Roles** 新增 **Threads Tester**
 4. 設定 OAuth redirect URI：`https://你的網域/threads/oauth/callback`
+5. 設定 Webhook 回呼網址：`https://你的網域/threads/webhook`
 
 > **注意**：`redirect_uri` 由 `APP_URL` 自動推導（`{APP_URL}/threads/oauth/callback`），無需在 `.env` 額外設定。
+
+### 回呼網址一覽
+
+| 用途 | 網址 |
+|------|------|
+| OAuth 綁定回呼（Callback） | `{APP_URL}/threads/oauth/callback` |
+| Webhook 事件回呼 | `{APP_URL}/threads/webhook` |
+
+> 兩者皆由 `APP_URL` 自動推導，無需在 `.env` 額外設定。
 
 ### 需要的權限
 
