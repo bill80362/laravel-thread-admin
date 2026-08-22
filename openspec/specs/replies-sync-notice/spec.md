@@ -6,12 +6,12 @@
 ## Requirements
 
 ### Requirement: 回覆列表頁顯示同步說明
-系統 SHALL 在回覆列表頁面上方顯示資訊提示，說明回覆資料的同步機制。
+系統 SHALL 在回覆列表頁面上方顯示資訊提示，說明回覆資料的同步機制，包含定期輪詢與 Webhook 即時通知。
 
 #### Scenario: 進入回覆列表頁時顯示提示
 - **WHEN** 管理者進入 `/admin/replies` 頁面
 - **THEN** 系統 SHALL 在表格上方顯示資訊提示區塊
-- **AND** 提示內容 SHALL 說明回覆資料每 5 分鐘自動同步一次
+- **AND** 提示內容 SHALL 說明回覆資料透過定期輪詢與 Webhook 即時通知取得
 - **AND** 提示內容 SHALL 告知新留言可能不會立即顯示
 
 #### Scenario: 提示區塊不影響表格操作
