@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="The Island — 行銷人的聚集地。集中管理多個 Threads 帳號，智慧排程發文，透過 MCP 串接 AI，讓內容建立、發布與互動都能自動化。">
+    <meta name="description" content="The Island — 行銷人的聚集地。集中管理多個 Threads 帳號，智慧排程發文，讓 AI 透過系統發文回覆，讓內容建立、發布與互動都能自動化。">
     <title>The Island — 行銷人的聚集地</title>
     <style>
         :root {
@@ -381,7 +381,7 @@
             <h1>讓社群經營<br>更簡單、更自動化</h1>
             <p class="sub">
                 集中管理多個 Threads 帳號，<br>
-                輕鬆排程發文，還能透過 MCP 串接 AI，<br>
+                輕鬆排程發文，還能讓 AI 透過系統發文回覆，<br>
                 讓內容建立、發布與互動都能自動化。
             </p>
             <div class="cta">
@@ -423,8 +423,8 @@
                 </div>
                 <div class="feature">
                     <div class="icon">🤖</div>
-                    <h3>MCP × AI</h3>
-                    <p>透過 MCP 串接 AI，讓 AI 不只是幫你寫內容，也能協助管理 Threads。</p>
+                    <h3>AI 透過系統發文回覆</h3>
+                    <p>讓 AI 直接在系統中建立貼文、發布內容與回覆留言，不只是幫你寫內容。</p>
                 </div>
             </div>
         </div>
@@ -453,7 +453,7 @@
                         <li>發文排程</li>
                         <li>圖片發文</li>
                         <li>回覆管理</li>
-                        <li>MCP × AI</li>
+                        <li>AI 透過系統發文回覆</li>
                     </ul>
                 </div>
                 <div class="plan popular">
@@ -467,7 +467,7 @@
                         <li>發文排程</li>
                         <li>圖片發文</li>
                         <li>回覆管理</li>
-                        <li>MCP × AI</li>
+                        <li>AI 透過系統發文回覆</li>
                     </ul>
                 </div>
                 <div class="plan custom">
