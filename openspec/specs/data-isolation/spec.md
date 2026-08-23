@@ -33,6 +33,10 @@
 - **WHEN** 登入人員或 MCP 工具建立一筆回覆
 - **THEN** 回覆 SHALL 記錄 `user_id` 為當前操作使用者
 
+#### Scenario: 輪詢抓回回覆時記錄帳號所屬使用者
+- **WHEN** 排程輪詢從 Threads 抓回一筆回覆
+- **THEN** 回覆 SHALL 記錄 `user_id` 為其所屬 Threads 帳號的 `user_id`
+
 #### Scenario: 後台僅顯示自己的回覆
 - **WHEN** 登入人員開啟回覆管理頁面
 - **THEN** 系統 SHALL 僅顯示 `user_id` 等於當前登入使用者的回覆

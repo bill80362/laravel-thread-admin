@@ -32,7 +32,7 @@
 #### Scenario: 說明回覆收集機制
 - **WHEN** 使用者閱讀「回覆收集」章節
 - **THEN** 說明 SHALL 說明系統僅偵測「本系統發出的貼文」的回覆
-- **AND** 說明 SHALL 說明每 5 分鐘自動偵測一次新回覆
+- **AND** 說明 SHALL 說明每 2 分鐘自動偵測一次新回覆
 
 ### Requirement: 使用說明涵蓋 MCP 服務設定
 使用說明 SHALL 說明 MCP 服務的本地與 HTTP 兩種模式，並提供 ChatGPT 與 Claude Desktop 的逐步註冊教學。HTTP 模式說明 SHALL 包含對外連線網址、OAuth 授權流程、登入帳號說明與 token 後續管理。
