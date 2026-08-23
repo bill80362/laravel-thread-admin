@@ -6,9 +6,11 @@ use App\Enums\ReplyStatus;
 use App\Enums\ThreadsAccountStatus;
 use App\Exceptions\ThreadsApiException;
 use App\Jobs\PublishReply;
+use App\Models\ActivityLog;
 use App\Models\Post;
 use App\Models\Reply;
 use App\Models\ThreadsAccount;
+use App\Models\User;
 use App\Services\ReplyService;
 use App\Services\ThreadsClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -184,6 +186,61 @@ class PublishReplyTest extends TestCase
         $reply->refresh();
 
         $this->assertSame(ReplyStatus::Replied, $reply->status);
+    }
+
+    public function test_daily_limit_blocks_reply_when_exceeded(): void
+    {
+        $user = User::factory()->create(['max_daily_replies' => 1]);
+        $account = ThreadsAccount::factory()->create(['user_id' => $user->id]);
+        $reply = Reply::factory()->create([
+            'user_id' => $user->id,
+            'threads_account_id' => $account->id,
+            'status' => ReplyStatus::New,
+        ]);
+
+        // 先建立一筆 activity_log 讓今日已達上限
+        ActivityLog::factory()->reply()->create([
+            'user_id' => $user->id,
+            'threads_account_id' => $account->id,
+            'created_at' => now(),
+        ]);
+
+        $threads = Mockery::mock(ThreadsClient::class);
+        $threads->shouldReceive('createTextContainer')->never();
+        $threads->shouldReceive('publishContainer')->never();
+
+        $job = new PublishReply($reply->id);
+        $job->handle($threads, app(ReplyService::class));
+
+        $reply->refresh();
+
+        $this->assertSame(ReplyStatus::Failed, $reply->status);
+        $this->assertSame('已達每日回覆上限', $reply->error_message);
+    }
+
+    public function test_successful_reply_creates_activity_log(): void
+    {
+        $account = ThreadsAccount::factory()->create();
+        $reply = Reply::factory()->create([
+            'threads_account_id' => $account->id,
+            'status' => ReplyStatus::Publishing,
+        ]);
+
+        $threads = Mockery::mock(ThreadsClient::class);
+        $threads->shouldReceive('publishContainer')
+            ->once()
+            ->andReturn('media-id-456');
+
+        $job = new PublishReply($reply->id, 'creation-id');
+        $job->handle($threads, app(ReplyService::class));
+
+        $this->assertDatabaseHas('activity_logs', [
+            'user_id' => $reply->user_id,
+            'threads_account_id' => $account->id,
+            'type' => 'reply',
+            'reference_id' => $reply->id,
+            'text' => $reply->text,
+        ]);
     }
 
     protected function tearDown(): void

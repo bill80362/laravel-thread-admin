@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Pages\EditPassword;
+use App\Filament\Resources\ActivityLogs\ActivityLogResource;
 use App\Filament\Resources\McpTokens\McpTokenResource;
 use App\Filament\Resources\Posts\PostResource;
 use App\Filament\Resources\Replies\ReplyResource;
@@ -42,6 +43,7 @@ class UserPanelProvider extends PanelProvider
                 PostResource::class,
                 ReplyResource::class,
                 McpTokenResource::class,
+                ActivityLogResource::class,
             ])
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([

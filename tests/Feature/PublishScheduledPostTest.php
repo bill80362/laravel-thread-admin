@@ -6,8 +6,10 @@ use App\Enums\PostStatus;
 use App\Enums\ThreadsAccountStatus;
 use App\Exceptions\ThreadsApiException;
 use App\Jobs\PublishScheduledPost;
+use App\Models\ActivityLog;
 use App\Models\Post;
 use App\Models\ThreadsAccount;
+use App\Models\User;
 use App\Services\ThreadsClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
@@ -208,6 +210,64 @@ class PublishScheduledPostTest extends TestCase
         $this->assertSame(PostStatus::Failed, $post->status);
         $this->assertSame('token 失效', $post->error_message);
         $this->assertSame(0, $post->publish_attempts);
+    }
+
+    public function test_daily_limit_blocks_post_when_exceeded(): void
+    {
+        $user = User::factory()->create(['max_daily_posts' => 1]);
+        $account = ThreadsAccount::factory()->create(['user_id' => $user->id]);
+        $post = Post::factory()->create([
+            'user_id' => $user->id,
+            'threads_account_id' => $account->id,
+            'status' => PostStatus::Scheduled,
+            'scheduled_at' => now()->subMinute(),
+        ]);
+
+        // 先建立一筆 activity_log 讓今日已達上限
+        ActivityLog::factory()->post()->create([
+            'user_id' => $user->id,
+            'threads_account_id' => $account->id,
+            'created_at' => now(),
+        ]);
+
+        $threads = Mockery::mock(ThreadsClient::class);
+        $threads->shouldReceive('createTextContainer')->never();
+        $threads->shouldReceive('publishContainer')->never();
+
+        $job = new PublishScheduledPost($post->id);
+        $job->handle($threads);
+
+        $post->refresh();
+
+        $this->assertSame(PostStatus::Failed, $post->status);
+        $this->assertSame('已達每日發文上限', $post->error_message);
+    }
+
+    public function test_successful_publish_creates_activity_log(): void
+    {
+        $account = ThreadsAccount::factory()->create();
+        $post = Post::factory()->create([
+            'threads_account_id' => $account->id,
+            'status' => PostStatus::Publishing,
+            'scheduled_at' => now()->subMinute(),
+        ]);
+
+        $threads = Mockery::mock(ThreadsClient::class);
+        $threads->shouldReceive('publishContainer')
+            ->once()
+            ->andReturn('media-id-123');
+
+        $job = new PublishScheduledPost($post->id, 'creation-id');
+        $job->handle($threads);
+
+        $this->assertDatabaseHas('activity_logs', [
+            'user_id' => $post->user_id,
+            'threads_account_id' => $account->id,
+            'type' => 'post',
+            'reference_id' => $post->id,
+            'threads_media_id' => 'media-id-123',
+            'text' => $post->text,
+        ]);
     }
 
     protected function tearDown(): void

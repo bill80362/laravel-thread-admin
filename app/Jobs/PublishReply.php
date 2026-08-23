@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Enums\ReplyStatus;
 use App\Enums\ThreadsAccountStatus;
 use App\Exceptions\ThreadsApiException;
+use App\Models\ActivityLog;
 use App\Models\Reply;
 use App\Services\ReplyService;
 use App\Services\ThreadsClient;
@@ -55,6 +56,20 @@ class PublishReply implements ShouldQueue
 
         try {
             if ($this->creationId === null) {
+                // 檢查每日回覆上限
+                $user = $reply->user;
+                if ($user !== null && $user->max_daily_replies > 0) {
+                    $todayCount = ActivityLog::countTodayForUser($user->id, 'reply');
+                    if ($todayCount >= $user->max_daily_replies) {
+                        $reply->update([
+                            'status' => ReplyStatus::Failed,
+                            'error_message' => '已達每日回覆上限',
+                        ]);
+
+                        return;
+                    }
+                }
+
                 $text = $this->replyText ?? $reply->text;
                 $replyToId = $replies->resolveReplyToId($reply);
 
@@ -73,6 +88,16 @@ class PublishReply implements ShouldQueue
                 'status' => ReplyStatus::Replied,
                 'replied_at' => now(),
                 'error_message' => null,
+            ]);
+
+            // 寫入 activity_log
+            ActivityLog::create([
+                'user_id' => $reply->user_id,
+                'threads_account_id' => $account->id,
+                'type' => 'reply',
+                'reference_id' => $reply->id,
+                'threads_media_id' => null,
+                'text' => $reply->text,
             ]);
         } catch (ThreadsApiException $e) {
             if ($e->isTokenInvalid()) {

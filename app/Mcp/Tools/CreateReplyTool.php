@@ -2,6 +2,7 @@
 
 namespace App\Mcp\Tools;
 
+use App\Models\ActivityLog;
 use App\Services\ReplyService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
@@ -32,6 +33,17 @@ class CreateReplyTool extends Tool
             $data['text'],
         );
 
+        // 計算軟性警告
+        $warnings = [];
+        $user = auth()->user();
+
+        if ($user !== null && $user->max_daily_replies > 0) {
+            $todaySent = ActivityLog::countTodayForUser($user->id, 'reply');
+            if ($todaySent > 0) {
+                $warnings[] = "今日已回覆 {$todaySent} 則（上限 {$user->max_daily_replies}）";
+            }
+        }
+
         return Response::structured([
             'reply' => [
                 'id' => $reply->id,
@@ -40,6 +52,7 @@ class CreateReplyTool extends Tool
                 'text' => $reply->text,
                 'status' => $reply->status->value,
             ],
+            'warnings' => $warnings,
         ]);
     }
 

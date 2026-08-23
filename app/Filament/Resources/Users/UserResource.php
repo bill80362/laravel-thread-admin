@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Users;
 use App\Filament\Resources\Users\Pages\CreateUser;
 use App\Filament\Resources\Users\Pages\EditUser;
 use App\Filament\Resources\Users\Pages\ListUsers;
+use App\Filament\Resources\Users\RelationManagers\ActivityLogsRelationManager;
 use App\Filament\Resources\Users\RelationManagers\ThreadsAccountsRelationManager;
 use App\Filament\Resources\Users\Schemas\UserForm;
 use App\Filament\Resources\Users\Tables\UsersTable;
@@ -43,6 +44,7 @@ class UserResource extends Resource
     {
         return [
             ThreadsAccountsRelationManager::class,
+            ActivityLogsRelationManager::class,
         ];
     }
 

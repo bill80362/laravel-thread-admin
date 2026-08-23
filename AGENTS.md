@@ -64,6 +64,12 @@
 - **所有回覆、說明、註解、commit 訊息建議，一律使用繁體中文（zh-TW）。**
 - 程式碼、指令、技術術語、JSON/YAML 區塊內容除外。
 
+# 資料庫設計
+
+- **所有 migration 不得使用外鍵約束（`->constrained()`、`foreignId()->constrained()`、`foreign()` 等）**。
+- 關聯僅在 Model 層透過 Eloquent `belongsTo` / `hasMany` 實現，資料庫層不建立 FK。
+- 不使用 `cascadeOnDelete` / `cascadeOnUpdate`，相關資料的清理在 Model `booted()` 的 `deleting` 事件中手動處理。
+
 === foundation rules ===
 
 # Laravel Boost Guidelines

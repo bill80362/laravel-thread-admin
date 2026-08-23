@@ -53,4 +53,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(ThreadsAccount::class);
     }
+
+    /**
+     * The activity logs for this user.
+     *
+     * @return HasMany<ActivityLog>
+     */
+    public function activityLogs(): HasMany
+    {
+        return $this->hasMany(ActivityLog::class);
+    }
 }

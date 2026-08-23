@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Enums\PostStatus;
 use App\Enums\ThreadsAccountStatus;
 use App\Exceptions\ThreadsApiException;
+use App\Models\ActivityLog;
 use App\Models\Post;
 use App\Services\ThreadsClient;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -68,6 +69,20 @@ class PublishScheduledPost implements ShouldQueue
         try {
             // --- Stage 1: 建立 container(s) ---
             if ($isStage1) {
+                // 檢查每日發文上限
+                $user = $post->user;
+                if ($user !== null && $user->max_daily_posts > 0) {
+                    $todayCount = ActivityLog::countTodayForUser($user->id, 'post');
+                    if ($todayCount >= $user->max_daily_posts) {
+                        $post->update([
+                            'status' => PostStatus::Failed,
+                            'error_message' => '已達每日發文上限',
+                        ]);
+
+                        return;
+                    }
+                }
+
                 $imageCount = $post->images->count();
 
                 if ($imageCount === 0) {
@@ -118,6 +133,16 @@ class PublishScheduledPost implements ShouldQueue
                 'threads_media_id' => $mediaId,
                 'published_at' => now(),
                 'error_message' => null,
+            ]);
+
+            // 寫入 activity_log
+            ActivityLog::create([
+                'user_id' => $post->user_id,
+                'threads_account_id' => $account->id,
+                'type' => 'post',
+                'reference_id' => $post->id,
+                'threads_media_id' => $mediaId,
+                'text' => $post->text,
             ]);
         } catch (ThreadsApiException $e) {
             if ($e->isTokenInvalid()) {

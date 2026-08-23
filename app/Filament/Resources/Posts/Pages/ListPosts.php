@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Posts\Pages;
 
 use App\Enums\PostStatus;
 use App\Filament\Resources\Posts\PostResource;
+use App\Models\ActivityLog;
 use App\Models\Post;
 use App\Services\PostService;
 use App\Services\ReplyService;
@@ -55,6 +56,33 @@ class ListPosts extends ListRecords
     {
         $this->replyDrawerOpen = false;
         $this->replyDrawerPostId = null;
+    }
+
+    /**
+     * 取得今日用量資料供 Blade view 使用。
+     *
+     * @return array{post_sent: int, post_max: int, post_scheduled: int, reply_sent: int, reply_max: int}
+     */
+    public function getDailyUsageData(): array
+    {
+        $userId = auth()->id();
+        $user = auth()->user();
+
+        $postSent = ActivityLog::countTodayForUser($userId, 'post');
+        $postScheduled = Post::query()
+            ->where('user_id', $userId)
+            ->where('status', PostStatus::Scheduled)
+            ->whereDate('scheduled_at', today())
+            ->count();
+        $replySent = ActivityLog::countTodayForUser($userId, 'reply');
+
+        return [
+            'post_sent' => $postSent,
+            'post_max' => $user?->max_daily_posts ?? 0,
+            'post_scheduled' => $postScheduled,
+            'reply_sent' => $replySent,
+            'reply_max' => $user?->max_daily_replies ?? 0,
+        ];
     }
 
     protected function getHeaderActions(): array

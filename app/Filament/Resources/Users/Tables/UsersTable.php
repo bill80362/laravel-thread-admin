@@ -2,8 +2,8 @@
 
 namespace App\Filament\Resources\Users\Tables;
 
-use App\Models\Post;
-use App\Models\Reply;
+use App\Filament\Resources\Users\UserResource;
+use App\Models\ActivityLog;
 use App\Models\ThreadsAccount;
 use App\Models\User;
 use Filament\Actions\DeleteAction;
@@ -39,17 +39,23 @@ class UsersTable
                     ->label('今日發文')
                     ->state(fn (User $record): string => sprintf(
                         '%d/%d',
-                        Post::where('user_id', $record->id)->whereDate('created_at', today())->count(),
+                        ActivityLog::countTodayForUser($record->id, 'post'),
                         $record->max_daily_posts,
-                    )),
+                    ))
+                    ->url(fn (User $record): string => UserResource::getUrl('edit', [
+                        'record' => $record,
+                    ]).'?activeRelationManager=1'),
 
                 TextColumn::make('daily_reply_usage')
                     ->label('今日回覆')
                     ->state(fn (User $record): string => sprintf(
                         '%d/%d',
-                        Reply::where('user_id', $record->id)->whereDate('created_at', today())->count(),
+                        ActivityLog::countTodayForUser($record->id, 'reply'),
                         $record->max_daily_replies,
-                    )),
+                    ))
+                    ->url(fn (User $record): string => UserResource::getUrl('edit', [
+                        'record' => $record,
+                    ]).'?activeRelationManager=1'),
 
                 IconColumn::make('is_active')
                     ->label('啟用')

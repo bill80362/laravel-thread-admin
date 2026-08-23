@@ -2,6 +2,9 @@
 
 namespace App\Mcp\Tools;
 
+use App\Enums\PostStatus;
+use App\Models\ActivityLog;
+use App\Models\Post;
 use App\Services\PostService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
@@ -46,6 +49,27 @@ class CreatePostTool extends Tool
             'scheduled_at' => $data['scheduled_at'],
         ]);
 
+        // 計算軟性警告
+        $warnings = [];
+        $user = auth()->user();
+
+        if ($user !== null && $user->max_daily_posts > 0) {
+            $todaySent = ActivityLog::countTodayForUser($user->id, 'post');
+            $todayScheduled = Post::query()
+                ->where('user_id', $user->id)
+                ->where('status', PostStatus::Scheduled)
+                ->whereDate('scheduled_at', today())
+                ->count();
+
+            if ($todaySent > 0 || $todayScheduled > 0) {
+                $parts = ["今日已發文 {$todaySent} 篇（上限 {$user->max_daily_posts}）"];
+                if ($todayScheduled > 0) {
+                    $parts[] = "尚有 {$todayScheduled} 篇排程將於今日發送";
+                }
+                $warnings[] = implode('，', $parts);
+            }
+        }
+
         return Response::structured([
             'post' => [
                 'id' => $post->id,
@@ -58,6 +82,7 @@ class CreatePostTool extends Tool
                 'scheduled_at' => $post->scheduled_at,
                 'status' => $post->status->value,
             ],
+            'warnings' => $warnings,
         ]);
     }
 
