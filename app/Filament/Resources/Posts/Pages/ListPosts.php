@@ -95,15 +95,31 @@ class ListPosts extends ListRecords
     public function table(Table $table): Table
     {
         return $table
-            ->heading('📋 貼文總覽')
+            ->heading(function () {
+                $usage = $this->getDailyUsageData();
+                $parts = [];
+                if ($usage['post_max'] > 0) {
+                    $parts[] = "📊 今日發文 {$usage['post_sent']}/{$usage['post_max']}";
+                }
+                if ($usage['reply_max'] > 0) {
+                    $parts[] = "回覆 {$usage['reply_sent']}/{$usage['reply_max']}";
+                }
+
+                return implode(' · ', $parts);
+            })
             ->description(function () {
                 $usage = $this->getDailyUsageData();
                 $parts = [];
                 if ($usage['post_max'] > 0) {
-                    $parts[] = "今日已發送 {$usage['post_sent']}/{$usage['post_max']} 篇";
+                    $remaining = max(0, $usage['post_max'] - $usage['post_sent']);
+                    $parts[] = "已發送 {$usage['post_sent']} 篇，剩餘 {$remaining} 篇";
+                    if ($usage['post_scheduled'] > 0) {
+                        $parts[] = "排程中今日將發送 {$usage['post_scheduled']} 篇";
+                    }
                 }
                 if ($usage['reply_max'] > 0) {
-                    $parts[] = "回覆 {$usage['reply_sent']}/{$usage['reply_max']} 則";
+                    $remaining = max(0, $usage['reply_max'] - $usage['reply_sent']);
+                    $parts[] = "已回覆 {$usage['reply_sent']} 則，剩餘 {$remaining} 則";
                 }
 
                 return implode(' · ', $parts);
