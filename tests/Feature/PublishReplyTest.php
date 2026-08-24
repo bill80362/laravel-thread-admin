@@ -68,6 +68,7 @@ class PublishReplyTest extends TestCase
         $reply->refresh();
 
         $this->assertSame(ReplyStatus::Replied, $reply->status);
+        $this->assertSame('media-id-123', $reply->threads_reply_id);
         $this->assertNotNull($reply->replied_at);
     }
 
@@ -233,7 +234,9 @@ class PublishReplyTest extends TestCase
 
         $job = new PublishReply($reply->id, 'creation-id');
         $job->handle($threads, app(ReplyService::class));
+        $reply->refresh();
 
+        $this->assertSame('media-id-456', $reply->threads_reply_id);
         $this->assertDatabaseHas('activity_logs', [
             'user_id' => $reply->user_id,
             'threads_account_id' => $account->id,

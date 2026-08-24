@@ -82,10 +82,11 @@ class PublishReply implements ShouldQueue
                 return;
             }
 
-            $threads->publishContainer($account, $this->creationId);
+            $mediaId = $threads->publishContainer($account, $this->creationId);
 
             $reply->update([
                 'status' => ReplyStatus::Replied,
+                'threads_reply_id' => $mediaId,
                 'replied_at' => now(),
                 'error_message' => null,
             ]);
