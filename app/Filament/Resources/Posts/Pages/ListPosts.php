@@ -95,6 +95,19 @@ class ListPosts extends ListRecords
     public function table(Table $table): Table
     {
         return $table
+            ->heading('📋 貼文總覽')
+            ->description(function () {
+                $usage = $this->getDailyUsageData();
+                $parts = [];
+                if ($usage['post_max'] > 0) {
+                    $parts[] = "今日已發送 {$usage['post_sent']}/{$usage['post_max']} 篇";
+                }
+                if ($usage['reply_max'] > 0) {
+                    $parts[] = "回覆 {$usage['reply_sent']}/{$usage['reply_max']} 則";
+                }
+
+                return implode(' · ', $parts);
+            })
             ->contentGrid([
                 'md' => 2,
                 'xl' => 3,

@@ -111,6 +111,57 @@ class ReplyService
     }
 
     /**
+     * 計算該使用者的全域未讀回覆總數（跨所有貼文）。
+     */
+    public function unreadTotalCount(?int $userId = null): int
+    {
+        $userId ??= auth()->id();
+
+        return Reply::query()
+            ->where('user_id', $userId)
+            ->whereNull('read_at')
+            ->count();
+    }
+
+    /**
+     * 計算該使用者的回覆總數。
+     */
+    public function totalCount(?int $userId = null): int
+    {
+        $userId ??= auth()->id();
+
+        return Reply::query()
+            ->where('user_id', $userId)
+            ->count();
+    }
+
+    /**
+     * 將該使用者的所有未讀回覆標記為已讀，回傳更新的筆數。
+     */
+    public function markAllAsRead(?int $userId = null): int
+    {
+        $userId ??= auth()->id();
+
+        return Reply::query()
+            ->where('user_id', $userId)
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+    }
+
+    /**
+     * 計算某貼文的回覆總數。
+     */
+    public function totalCountForPost(int $postId, ?int $userId = null): int
+    {
+        $userId ??= auth()->id();
+
+        return Reply::query()
+            ->where('user_id', $userId)
+            ->where('post_id', $postId)
+            ->count();
+    }
+
+    /**
      * 查詢回覆清單，支援依帳號、貼文與狀態篩選。
      *
      * @param  array{threads_account_id?: int, post_id?: int, status?: string}  $filters

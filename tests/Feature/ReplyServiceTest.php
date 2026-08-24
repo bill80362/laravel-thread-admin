@@ -261,4 +261,89 @@ class ReplyServiceTest extends TestCase
         $this->assertNull($replyOther->fresh()->read_at);
         $this->assertSame(1, app(ReplyService::class)->unreadCount($postB->id));
     }
+
+    public function test_unread_total_count_counts_all_unread_across_posts(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $account = ThreadsAccount::factory()->create(['user_id' => $user->id]);
+        $postA = Post::factory()->published()->create(['threads_account_id' => $account->id, 'user_id' => $user->id]);
+        $postB = Post::factory()->published()->create(['threads_account_id' => $account->id, 'user_id' => $user->id]);
+
+        Reply::factory()->create(['user_id' => $user->id, 'post_id' => $postA->id, 'read_at' => null]);
+        Reply::factory()->create(['user_id' => $user->id, 'post_id' => $postA->id, 'read_at' => null]);
+        Reply::factory()->create(['user_id' => $user->id, 'post_id' => $postB->id, 'read_at' => now()]);
+
+        $this->assertSame(2, app(ReplyService::class)->unreadTotalCount());
+    }
+
+    public function test_total_count_counts_all_replies(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $account = ThreadsAccount::factory()->create(['user_id' => $user->id]);
+        $post = Post::factory()->published()->create(['threads_account_id' => $account->id, 'user_id' => $user->id]);
+
+        Reply::factory()->create(['user_id' => $user->id, 'post_id' => $post->id]);
+        Reply::factory()->create(['user_id' => $user->id, 'post_id' => $post->id]);
+        Reply::factory()->create(['user_id' => $user->id]);
+
+        $this->assertSame(3, app(ReplyService::class)->totalCount());
+    }
+
+    public function test_mark_all_as_read_marks_all_unread(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $account = ThreadsAccount::factory()->create(['user_id' => $user->id]);
+        $postA = Post::factory()->published()->create(['threads_account_id' => $account->id, 'user_id' => $user->id]);
+        $postB = Post::factory()->published()->create(['threads_account_id' => $account->id, 'user_id' => $user->id]);
+
+        Reply::factory()->create(['user_id' => $user->id, 'post_id' => $postA->id, 'read_at' => null]);
+        Reply::factory()->create(['user_id' => $user->id, 'post_id' => $postB->id, 'read_at' => null]);
+
+        $updated = app(ReplyService::class)->markAllAsRead();
+
+        $this->assertSame(2, $updated);
+        $this->assertSame(0, app(ReplyService::class)->unreadTotalCount());
+    }
+
+    public function test_mark_all_as_read_ignores_other_users(): void
+    {
+        $userA = User::factory()->create();
+        $userB = User::factory()->create();
+
+        $this->actingAs($userA);
+
+        $accountA = ThreadsAccount::factory()->create(['user_id' => $userA->id]);
+        $postA = Post::factory()->published()->create(['threads_account_id' => $accountA->id, 'user_id' => $userA->id]);
+        Reply::factory()->create(['user_id' => $userA->id, 'post_id' => $postA->id, 'read_at' => null]);
+
+        $accountB = ThreadsAccount::factory()->create(['user_id' => $userB->id]);
+        $postB = Post::factory()->published()->create(['threads_account_id' => $accountB->id, 'user_id' => $userB->id]);
+        $replyOther = Reply::factory()->create(['user_id' => $userB->id, 'post_id' => $postB->id, 'read_at' => null]);
+
+        app(ReplyService::class)->markAllAsRead();
+
+        $this->assertNull($replyOther->fresh()->read_at);
+    }
+
+    public function test_total_count_for_post_counts_only_given_post(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $account = ThreadsAccount::factory()->create(['user_id' => $user->id]);
+        $postA = Post::factory()->published()->create(['threads_account_id' => $account->id, 'user_id' => $user->id]);
+        $postB = Post::factory()->published()->create(['threads_account_id' => $account->id, 'user_id' => $user->id]);
+
+        Reply::factory()->create(['user_id' => $user->id, 'post_id' => $postA->id]);
+        Reply::factory()->create(['user_id' => $user->id, 'post_id' => $postA->id]);
+        Reply::factory()->create(['user_id' => $user->id, 'post_id' => $postB->id]);
+
+        $this->assertSame(2, app(ReplyService::class)->totalCountForPost($postA->id));
+    }
 }

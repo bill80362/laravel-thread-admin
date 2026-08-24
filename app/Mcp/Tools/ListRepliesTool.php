@@ -11,7 +11,7 @@ use Laravel\Mcp\ResponseFactory;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Tool;
 
-#[Description('查詢回覆清單，支援依帳號、貼文與狀態篩選。')]
+#[Description('查詢回覆清單，支援依帳號、貼文與狀態篩選，可選擇查詢後標記已讀。')]
 class ListRepliesTool extends Tool
 {
     /**
@@ -23,6 +23,7 @@ class ListRepliesTool extends Tool
             'threads_account_id' => ['nullable', 'integer', 'exists:threads_accounts,id'],
             'post_id' => ['nullable', 'integer', 'exists:posts,id'],
             'status' => ['nullable', 'string', 'in:new,replied,ignored'],
+            'mark_as_read' => ['nullable', 'boolean'],
         ]);
 
         $result = $replies->list($data)->map(fn ($reply): array => [
@@ -34,7 +35,12 @@ class ListRepliesTool extends Tool
             'status' => $reply->status->value,
             'error_message' => $reply->error_message,
             'replied_at' => $reply->replied_at,
+            'read_at' => $reply->read_at,
         ]);
+
+        if ($data['mark_as_read'] ?? false) {
+            $replies->markAllAsRead();
+        }
 
         return Response::structured(['replies' => $result->all()]);
     }
@@ -53,6 +59,8 @@ class ListRepliesTool extends Tool
                 ->description('依貼文 ID 篩選'),
             'status' => $schema->string()
                 ->description('依狀態篩選（new / replied / ignored）'),
+            'mark_as_read' => $schema->boolean()
+                ->description('設為 true 時，查詢後將所有未讀回覆標記為已讀'),
         ];
     }
 }
