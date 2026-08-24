@@ -1,10 +1,31 @@
 <div class="space-y-4">
     <p class="text-gray-600 dark:text-gray-400">MCP（Model Context Protocol）是一種讓 AI 工具（如 ChatGPT、Claude Desktop）可以直接操作本系統的協定。系統透過 HTTP 模式提供服務，使用 OAuth 2.1 認證。</p>
 
+    {{-- ===== MCP 連線網址（一鍵複製） ===== --}}
+    <div class="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-4">
+        <p class="text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">MCP 連線網址</p>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">在 AI 客戶端設定時，請使用以下網址（自動帶入目前的後台網域）：</p>
+        <div class="flex items-center gap-2">
+            <code id="mcp-url" class="flex-1 bg-gray-100 dark:bg-gray-600/30 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm text-gray-800 dark:text-gray-200 select-all font-mono">{{ config('app.url') }}/mcp/threads</code>
+            <button
+                x-data
+                x-on:click="
+                    navigator.clipboard.writeText('{{ config('app.url') }}/mcp/threads');
+                    $el.querySelector('span').textContent = '已複製！';
+                    setTimeout(() => $el.querySelector('span').textContent = '複製', 2000);
+                "
+                type="button"
+                class="inline-flex items-center gap-1 px-3 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-lg transition-colors"
+            >
+                <span>[複製]</span>
+            </button>
+        </div>
+    </div>
+
     {{-- ===== HTTP 模式設定步驟 ===== --}}
     <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
         <div class="flex items-center gap-2 mb-3">
-            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900 text-primary-600 dark:text-primary-400 text-xs font-bold">H</span>
+            {{-- <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900 text-primary-600 dark:text-primary-400 text-xs font-bold">H</span> --}}
             <h3 class="text-base font-semibold text-gray-900 dark:text-white">HTTP 模式設定步驟</h3>
         </div>
 
