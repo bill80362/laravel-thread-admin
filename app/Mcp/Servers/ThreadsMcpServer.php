@@ -8,6 +8,8 @@ use App\Mcp\Tools\GetPostTool;
 use App\Mcp\Tools\ListAccountsTool;
 use App\Mcp\Tools\ListPostsTool;
 use App\Mcp\Tools\ListRepliesTool;
+use App\Mcp\Tools\ReplyToReplyTool;
+use App\Mcp\Tools\UpdateReplyStatusTool;
 use Laravel\Mcp\Server;
 use Laravel\Mcp\Server\Attributes\Instructions;
 use Laravel\Mcp\Server\Attributes\Name;
@@ -29,5 +31,7 @@ class ThreadsMcpServer extends Server
         GetPostTool::class,
         ListRepliesTool::class,
         CreateReplyTool::class,
+        ReplyToReplyTool::class,
+        UpdateReplyStatusTool::class,
     ];
 }

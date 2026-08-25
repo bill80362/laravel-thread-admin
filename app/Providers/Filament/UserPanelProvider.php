@@ -6,7 +6,6 @@ use App\Filament\Pages\EditPassword;
 use App\Filament\Resources\ActivityLogs\ActivityLogResource;
 use App\Filament\Resources\McpTokens\McpTokenResource;
 use App\Filament\Resources\Posts\PostResource;
-use App\Filament\Resources\Replies\ReplyResource;
 use App\Filament\Resources\ThreadsAccounts\ThreadsAccountResource;
 use App\Filament\Widgets\ThreadsOverview;
 use Filament\Http\Middleware\Authenticate;
@@ -41,7 +40,6 @@ class UserPanelProvider extends PanelProvider
             ->resources([
                 ThreadsAccountResource::class,
                 PostResource::class,
-                ReplyResource::class,
                 McpTokenResource::class,
                 ActivityLogResource::class,
             ])
