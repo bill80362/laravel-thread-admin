@@ -21,7 +21,6 @@ class ThreadsApiException extends Exception
     {
         return $this->httpStatus === 401
             || $this->errorCode === 190
-            || str_contains(strtolower($this->message), 'token')
             || str_contains(strtolower($this->message), 'oauth');
     }
 

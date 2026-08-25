@@ -7,6 +7,7 @@ use App\Models\ThreadsAccount;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Psr\Http\Message\ResponseInterface;
@@ -30,6 +31,12 @@ class ThreadsClient
         'threads_content_publish',
         'threads_manage_replies',
         'threads_read_replies',
+        'threads_manage_insights',
+        'threads_delete',
+        'threads_keyword_search',
+        'threads_location_tagging',
+        'threads_manage_mentions',
+        'threads_profile_discovery',
     ];
 
     public function __construct(
@@ -275,13 +282,28 @@ class ThreadsClient
 
             throw $this->toApiException($e);
         } catch (GuzzleException $e) {
+            $httpStatus = null;
+            $responseBody = null;
+
+            // Guzzle 的 5xx（ServerException 等）皆為 RequestException 子類，
+            // 可從其 getResponse() 取得實際伺服器回應，據此記錄 status 與 body。
+            if ($e instanceof RequestException && $e->getResponse() !== null) {
+                $response = $e->getResponse();
+                $httpStatus = $response->getStatusCode();
+                $responseBody = (string) $response->getBody();
+
+                $this->logResponse($response);
+            }
+
             Log::error('Threads API request failed', [
                 'method' => $method,
                 'url' => $url,
                 'error' => $e->getMessage(),
+                'status' => $httpStatus,
+                'response' => $responseBody,
             ]);
 
-            throw new ThreadsApiException($e->getMessage(), null, null);
+            throw new ThreadsApiException($e->getMessage(), null, $httpStatus);
         }
 
         return $this->decode($response);
