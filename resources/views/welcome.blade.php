@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="The Island — 行銷人的聚集地。集中管理多個 Threads 帳號，智慧排程發文，讓 AI 透過系統發文回覆，讓內容建立、發布與互動都能自動化。">
-    <title>The Island — 行銷人的聚集地</title>
+    <meta name="description" content="OO-Pilot 一人衝，AI 攻。專為一人公司打造的最佳助手，集中管理多個 Threads 帳號，智慧排程發文，讓 AI 透過系統發文回覆，讓內容建立、發布與互動都能自動化。">
+    <title>OO-Pilot 一人衝，AI 攻</title>
     <style>
         :root {
             --bg: #0b0f1a;
@@ -366,7 +366,7 @@
     <!-- Topbar -->
     <nav class="topbar">
         <div class="container">
-            <span class="brand">The <span class="grad">Island</span> — 行銷人的聚集地</span>
+            <span class="brand">OO-<span class="grad">Pilot</span> 一人衝，AI 攻</span>
             <div class="contact">
                 <span class="label">業務洽詢 Donnie</span>
                 <a class="phone" href="tel:0921515408">0921-515408</a>
@@ -377,12 +377,12 @@
     <!-- Hero -->
     <header class="hero">
         <div class="container">
-            <span class="badge">行銷人的聚集地</span>
-            <h1>讓社群經營<br>更簡單、更自動化</h1>
+            <span class="badge">One Operator. One AI Attack.</span>
+            <h1>我挺<br><span class="grad">你</span></h1>
             <p class="sub">
-                集中管理多個 Threads 帳號，<br>
-                輕鬆排程發文，還能讓 AI 透過系統發文回覆，<br>
-                讓內容建立、發布與互動都能自動化。
+                專為單打獨鬥的你打造的最佳助手，<br>
+                集中管理多個 Threads 帳號，輕鬆排程發文，<br>
+                讓 AI 透過系統發文回覆，內容建立、發布與互動全面自動化。
             </p>
             <div class="cta">
                 <a href="tel:0921515408" class="btn btn-primary">業務洽詢 Donnie 0921-515408</a>
@@ -490,13 +490,14 @@
     <!-- CTA -->
     <section class="cta-section">
         <div class="container">
-            <h2>發文、回覆更省力，產量自然更給力。</h2>
+            <h2>一人衝，AI 攻，<br>一人公司也能高效運轉。</h2>
         </div>
     </section>
 
     <footer>
         <div class="container">
-            © {{ date('Y') }} The Island — 行銷人的聚集地
+            © {{ date('Y') }} OO-Pilot — One Operator. One AI Attack.<br>
+            oo-pilot.com
         </div>
     </footer>
 
