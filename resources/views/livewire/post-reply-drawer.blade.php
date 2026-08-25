@@ -71,15 +71,26 @@
         <form wire:submit="sendReply" style="display: flex; align-items: flex-end; gap: 0.5rem;">
             <textarea
                 wire:model="replyText"
+                wire:loading.attr="disabled"
+                wire:target="sendReply"
+                x-on:keydown.shift.enter.prevent="$wire.sendReply()"
                 rows="2"
                 style="display: block; width: 100%; resize: none; border-radius: 0.5rem; border: 1px solid #d1d5db; background-color: #ffffff; font-size: 0.875rem; color: #1f2937; padding: 0.5rem 0.75rem;"
-                placeholder="回覆貼文…"
+                placeholder="回覆貼文… (Shift+Enter 送出)"
             ></textarea>
             <button
                 type="submit"
-                style="margin-left: 0.5rem; flex-shrink: 0; border-radius: 0.5rem; background-color: #2563eb; padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 600; color: #ffffff; border: none; cursor: pointer;"
+                wire:loading.attr="disabled"
+                wire:target="sendReply"
+                style="margin-left: 0.5rem; flex-shrink: 0; border-radius: 0.5rem; background-color: #2563eb; padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 600; color: #ffffff; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.375rem;"
             >
-                送出
+                <span wire:loading.remove wire:target="sendReply">送出</span>
+                <span wire:loading wire:target="sendReply">
+                    <span style="display: inline-flex; align-items: center; gap: 0.375rem;">
+                        <span class="btn-spinner"></span>
+                        送出中…
+                    </span>
+                </span>
             </button>
         </form>
     </div>
@@ -89,6 +100,30 @@
     @keyframes pulse {
         0%, 100% { opacity: 1; }
         50% { opacity: 0.3; }
+    }
+
+    .btn-spinner {
+        display: inline-block;
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        animation: btn-spin 0.6s linear infinite;
+    }
+
+    @keyframes btn-spin {
+        to { transform: rotate(360deg); }
+    }
+
+    button[disabled] {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    textarea:disabled {
+        background-color: #f3f4f6;
+        cursor: not-allowed;
     }
 </style>
 
