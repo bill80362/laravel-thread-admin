@@ -7,7 +7,6 @@ use App\Filament\Resources\Replies\Pages\ListReplies;
 use App\Filament\Resources\Replies\Schemas\ReplyForm;
 use App\Filament\Resources\Replies\Tables\RepliesTable;
 use App\Models\Reply;
-use App\Services\ReplyService;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -52,20 +51,6 @@ class ReplyResource extends Resource
         return [
             //
         ];
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        $service = app(ReplyService::class);
-
-        return $service->unreadTotalCount().'/'.$service->totalCount();
-    }
-
-    public static function getNavigationBadgeColor(): ?string
-    {
-        $unread = app(ReplyService::class)->unreadTotalCount();
-
-        return $unread > 0 ? 'warning' : 'gray';
     }
 
     public static function getPages(): array

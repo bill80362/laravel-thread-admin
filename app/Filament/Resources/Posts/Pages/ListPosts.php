@@ -275,7 +275,16 @@ class ListPosts extends ListRecords
             })
             ->recordActions([
                 Action::make('viewReplies')
-                    ->label('回覆')
+                    ->label(function (Post $record): string {
+                        $unread = app(ReplyService::class)->unreadCount($record->id);
+                        $total = app(ReplyService::class)->totalCountForPost($record->id);
+
+                        if ($total === 0) {
+                            return '回覆';
+                        }
+
+                        return "回覆 ({$unread}/{$total})";
+                    })
                     ->icon(Heroicon::OutlinedChatBubbleLeftRight)
                     ->action(fn (Post $record) => $this->openReplyDrawer($record->id)),
 
