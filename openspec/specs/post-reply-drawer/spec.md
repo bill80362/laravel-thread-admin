@@ -59,3 +59,48 @@
 - **WHEN** 管理者送出空白回覆內容
 - **THEN** 系統 SHALL 顯示驗證錯誤
 - **AND** 系統 SHALL 不建立回覆記錄
+
+### Requirement: 送出按鈕顯示 loading 狀態
+當管理者按下送出按鈕後、Livewire 請求完成前，送出按鈕 SHALL 呈現 loading 狀態，防止再次點擊。
+
+#### Scenario: 請求期間按鈕 disabled
+- **WHEN** 管理者按下送出按鈕
+- **THEN** 送出按鈕 SHALL 立即設為 disabled
+- **AND** 送出按鈕 SHALL 顯示 loading 指示器
+
+#### Scenario: 請求完成後按鈕恢復
+- **WHEN** Livewire 請求完成（成功或失敗）
+- **THEN** 送出按鈕 SHALL 恢復為可點擊狀態
+- **AND** 送出按鈕 SHALL 回到原始文字
+
+### Requirement: 請求期間 textarea 禁用
+當送出請求進行中時，textarea SHALL 設為 disabled，防止管理者編輯內容。
+
+#### Scenario: 請求期間 textarea 不可編輯
+- **WHEN** 管理者按下送出按鈕
+- **THEN** textarea SHALL 立即設為 disabled
+
+#### Scenario: 請求完成後 textarea 恢復
+- **WHEN** Livewire 請求完成（成功時清空內容，失敗時保留內容）
+- **THEN** textarea SHALL 恢復為可編輯狀態
+
+### Requirement: 防止雙重提交
+在送出請求進行中，系統 SHALL 防止管理者再次觸發送出動作。
+
+#### Scenario: 重複點擊不產生第二個請求
+- **WHEN** 送出按鈕處於 loading 狀態
+- **AND** 管理者再次點擊送出按鈕
+- **THEN** 系統 SHALL 不觸發第二個 Livewire 請求
+
+### Requirement: Shift+Enter 快捷送出
+系統 SHALL 支援在回覆輸入框按下 Shift+Enter 直接送出回覆，Enter 則維持換行行為。
+
+#### Scenario: Shift+Enter 送出回覆
+- **WHEN** 管理者在回覆輸入框按下 Shift+Enter
+- **THEN** 系統 SHALL 觸發送出回覆動作
+- **AND** 系統 SHALL 不插入換行
+
+#### Scenario: Enter 維持換行
+- **WHEN** 管理者在回覆輸入框按下 Enter
+- **THEN** 系統 SHALL 在輸入框插入換行
+- **AND** 系統 SHALL 不觸發送出回覆動作
