@@ -369,7 +369,7 @@
             <span class="brand">OO-<span class="grad">Pilot</span> 一人衝，AI 攻</span>
             <div class="contact">
                 <span class="label">業務洽詢 Donnie</span>
-                <a class="phone" href="tel:0921515408">0982-321356</a>
+                <a class="phone" href="tel:0921515408">0987-653382</a>
             </div>
         </div>
     </nav>
@@ -385,7 +385,7 @@
                 讓 AI 透過系統發文回覆，內容建立、發布與互動全面自動化。
             </p>
             <div class="cta">
-                <a href="tel:0921515408" class="btn btn-primary">業務洽詢 Donnie 0982-321356</a>
+                <a href="tel:0921515408" class="btn btn-primary">業務洽詢 Donnie 0987-653382</a>
             </div>
         </div>
     </header>
