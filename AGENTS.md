@@ -66,6 +66,9 @@
 
 # 資料庫設計
 
+- **正式區使用 MariaDB、本機開發使用 SQLite**，所有 migration 語法必須兩者通用。
+- **禁止在 migration 中使用 SQLite 專用語法**（如 `PRAGMA foreign_keys`、`AUTOINCREMENT`、手動 `CREATE TABLE ... RENAME` 重建資料表等），這些在 MariaDB 上會執行失敗。
+- 一律使用 Laravel Schema builder（`Schema::table()`、`->change()`、`->dropForeign()` 等），它會依資料庫引擎自動產生對應 SQL（SQLite 內部重建、MariaDB 用 `ALTER TABLE`）。
 - **所有 migration 不得使用外鍵約束（`->constrained()`、`foreignId()->constrained()`、`foreign()` 等）**。
 - 關聯僅在 Model 層透過 Eloquent `belongsTo` / `hasMany` 實現，資料庫層不建立 FK。
 - 不使用 `cascadeOnDelete` / `cascadeOnUpdate`，相關資料的清理在 Model `booted()` 的 `deleting` 事件中手動處理。
