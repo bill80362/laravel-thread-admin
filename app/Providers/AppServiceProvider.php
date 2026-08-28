@@ -26,6 +26,9 @@ class AppServiceProvider extends ServiceProvider
             return new Client([
                 'timeout' => 30,
                 'http_errors' => true,
+                'curl' => [
+                    CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
+                ],
             ]);
         });
     }
