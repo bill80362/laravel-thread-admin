@@ -350,6 +350,21 @@
             border-top: 1px solid var(--border);
         }
 
+        footer .links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+
+        footer .links a {
+            color: var(--muted);
+            text-decoration: none;
+        }
+
+        footer .links a:hover { color: var(--text); text-decoration: underline; }
+
         /* ===== RWD: 平板以上 ===== */
         @media (min-width: 640px) {
             .features { grid-template-columns: repeat(2, 1fr); }
@@ -496,6 +511,10 @@
 
     <footer>
         <div class="container">
+            <div class="links">
+                <a href="{{ url('/privacy-policy') }}">隱私政策</a>
+                <a href="{{ url('/terms-of-service') }}">服務條款</a>
+            </div>
             © {{ date('Y') }} OO-Pilot — One Operator. One AI Attack.<br>
             oo-pilot.com
         </div>
