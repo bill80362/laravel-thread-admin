@@ -21,5 +21,4 @@ jobs:
             composer install --no-dev --optimize-autoloader
             php artisan migrate
             php artisan optimize
-            sudo systemctl restart httpd
             sudo supervisorctl restart all
